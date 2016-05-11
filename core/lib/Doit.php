@@ -1824,7 +1824,7 @@ foreach($tmparr as $key=>$subval)
 	{
 		static $result = null;
 		if (!isset($result)) {
-			$result = file_get_contents($_SERVER['DOCUMENT_ROOT'] . '/cms/VERSION.txt') || 'default';
+			$result = file_get_contents(DOIT_ROOT . '/core/VERSION.txt') || '3';
 		}
 		return $result;
 	}
@@ -1867,7 +1867,7 @@ foreach($tmparr as $key=>$subval)
 	
 	function dispatch($level='content'){
  
-		
+		//TODO: получать REQUEST_URI из $request
 		$accepted_routes = array();
 		$url=urldecode(strtok($_SERVER["REQUEST_URI"],'?'));
 		foreach($this->routes as $route){
@@ -1883,15 +1883,14 @@ foreach($tmparr as $key=>$subval)
 		}
 		return false;
 	}
+	
 	function new_pipe()
 	{
 		return new Zend\Stratigility\MiddlewarePipe();
 	}
-	function add($path=false, $middleware = null){
-		/* обёртка для запуска как иконки {{add}}, так и для добавления middleware */
-		if(is_array($path) || $path === false){
-			return d()->call('add',$path);
-		}
+	
+	function add($path=false, $middleware = null)
+	{
 		$this->middleware_pipe->pipe($path, $middleware);
 	}
 	
@@ -1901,38 +1900,8 @@ foreach($tmparr as $key=>$subval)
 	function write($text){
 		$this->http_response->getBody()->write($text);
 	}
-	/* Функция, стартующая вообще всё. */
-	function main(){
-		
-		if(PHP_VERSION_ID > 50408) {
-			$this->middleware_pipe->pipe(function($request, $response, $next){
-				$response->getBody()->write($this->call('main'));
-			});
-			
-			$pipe = $this->middleware_pipe;
-			$pipe($this->http_request, $this->http_response);
-			 
-			return $this->http_response->getBody();
-		}
-		return $this->call('main');
-	}
-	
-	/*
-		Функция, загружающая контент страницы
-	*/
-	public function content()
-	{
-		//1. (пропускаем) ищем функции (роуты, которые мы можем выполнить, и выполняем их)
-		//3. Передаём дальше в content
-		//d()->router->dispatch();
-		$result = d()->dispatch();
-		if($result === false){
-			return d()->call('content');
-		}
-		return $result;
-		
-		
-	}
+
+
 	/* END VERSION 2.0 */
 		
 	
@@ -2038,7 +2007,7 @@ foreach($tmparr as $key=>$subval)
 			$this->_current_route_basename = false;
 			include(DOIT_ROOT.'/'.$value);
 			$this->_current_route_basename = false;
-		}		
+		}
 		
 		
 	}
