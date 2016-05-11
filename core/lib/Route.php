@@ -1,5 +1,7 @@
 <?php
 
+use Psr\Http\Message\ServerRequestInterface as Request;
+use Psr\Http\Message\ResponseInterface as Response;
 
 class Route
 {
@@ -59,6 +61,9 @@ class Route
 		
 		return true;
 	}
+	
+	/*
+	//DEPRECATED
 	public function dispatch($url){
 		$matches = array();
 		$regex = $this->url;
@@ -87,5 +92,42 @@ class Route
 		
 		return $_end;
 	}
+	*/
+	public function __invoke(Request $request, Response $response, callable $out = null)
+    {
+		
+		$url = urldecode(strtok($request->getRequestTarget(),'?'));
+		$matches = array();
+		$regex = $this->url;
+		$regex = preg_replace(
+			array('#\:[a-z_][a-zA-Z0-9_]*\+#','#\:[a-z_][a-zA-Z0-9_]*\*#','#\:[a-z_][a-zA-Z0-9_]*#'),array('(.+?)','(.*?)','([^\/]+?)')
+		,$regex);
+		preg_match('#^'.$regex.'$#',$url,$matches);
+		unset($matches[0]);
+		ob_start('doit_ob_error_handler');
+		//TODO: error handler
+		$matches[]=$request;
+		$matches[]=$response;
+
+		$_executionResult = call_user_func_array($this->closure,$matches);
+		$_end = ob_get_contents();
+		ob_end_clean();
+		if (!is_null($_executionResult)) {
+			$_end = $_executionResult;
+		}else{
+			//null; ob_start ничего не дал, return в контроллере не было
+			//начинаем рулить шаблон
+			if($_end == ''){
+				$_end = d()->view;
+			}
+		}
+		
+		$response->getBody()->write($_end);
+		//$response = $next($request, $response);
+		
+		return $response;
+		
+		
+    }
 	
 }

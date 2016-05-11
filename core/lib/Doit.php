@@ -1864,7 +1864,7 @@ foreach($tmparr as $key=>$subval)
 			$closure();
 		}
 	}
-	
+	/*
 	function dispatch($level='content'){
  
 		//TODO: получать REQUEST_URI из $request
@@ -1883,13 +1883,13 @@ foreach($tmparr as $key=>$subval)
 		}
 		return false;
 	}
-	
+	*/
 	function new_pipe()
 	{
 		return new Zend\Stratigility\MiddlewarePipe();
 	}
 	
-	function add($path=false, $middleware = null)
+	function add($path, $middleware = null)
 	{
 		$this->middleware_pipe->pipe($path, $middleware);
 	}
@@ -2000,6 +2000,27 @@ foreach($tmparr as $key=>$subval)
 
 			},true,true);
 		}
+		
+		
+		
+		
+		
+		//Creating PSR-7 middleware, request and response
+		$this->http_request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
+			$_SERVER,
+			$_GET,
+			$_POST,
+			$_COOKIE,
+			$_FILES
+		);
+		
+		$this->http_response = new Zend\Diactoros\Response();
+		$this->middleware_pipe=new Zend\Stratigility\MiddlewarePipe();
+		
+		
+		
+		
+		
 		foreach($for_include as $value) {
 			
 			$this->_current_include_directory = dirname(DOIT_ROOT.'/'.$value);
@@ -2013,22 +2034,32 @@ foreach($tmparr as $key=>$subval)
 	}
 	function runApplication(){
 		
-		//Creating PSR-7 middleware, request and response
-		$this->http_request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
-			$_SERVER,
-			$_GET,
-			$_POST,
-			$_COOKIE,
-			$_FILES
-		);
-		
-		$this->http_response = new Zend\Diactoros\Response();
+
 		$this->http_response = $this->http_response->withHeader('Content-type','text/html');
-		$this->middleware_pipe=new Zend\Stratigility\MiddlewarePipe();
+ 
 		
 		$this->middleware_pipe->pipe(function($request, $response, $next){
 			//Running code here
-			$response->getBody()->write($this->dispatch());
+			
+			$accepted_routes = array();
+			$url=urldecode($request->getUri()->getPath());
+			foreach($this->routes as $route){
+				if($route->check($url,$request->getMethod())){
+					$accepted_routes[]=$route;
+				}
+			}
+			if(count($accepted_routes)){
+				$this->current_route = $accepted_routes[0];
+				$current_route = $accepted_routes[0];
+				$response = $current_route($request, $response);
+				$this->current_route = false;
+				return $response;
+			}
+			
+			
+			
+			
+		//	$response->getBody()->write($this->dispatch());
 		});
 		
 		$pipe = $this->middleware_pipe;
