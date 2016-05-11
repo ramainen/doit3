@@ -1,0 +1,3 @@
+В этой директории расположены виртуальные сайты, каждая директория - отдельный сайт. Имя директории - адрес сайта без www. Содержимое директории - аналог директории app.
+
+There are virtual sites in this directory, each directory - another site. Directory name is site adress without "www". If directory name doesn't contains ".", it means thi is directory for subdomain. All files there identic like "app" directory.

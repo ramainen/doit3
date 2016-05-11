@@ -79,7 +79,7 @@ class Doit
 	public $http_response = false;
 	public $middleware_pipe = false;
 /* ================================================================================= */	
-	function __construct()
+	function old__construct()
 	{
 		self::$instance = $this;
 		
@@ -690,112 +690,6 @@ foreach($tmparr as $key=>$subval)
 		 
 	}
 
-	
-	
-	/* VERSION 2.0 */
-	public $routes=array();
-	function route($adress, $closure=false){
-		$route = new Route();
-		$route->map($adress, $closure);
-		$route->initiateAutoFind($this->_current_include_directory);
-		$this->routes[]=$route;
-		return $route;
-	}
-	
-	function post($adress, $closure=false){
-		$route = new Route();
-		$route->map($adress, $closure);
-		$route->method = array('POST');
-		$route->initiateAutoFind($this->_current_include_directory);
-		$this->routes[]=$route;
-		return $route;
-	}
-	
-	function get($adress, $closure=false){
-		$route = new Route();
-		$route->map($adress, $closure);
-		$route->method = array('GET');
-		$route->initiateAutoFind($this->_current_include_directory);
-		$this->routes[]=$route;
-		return $route;
-	}
-	
-	function group($url, $closure=false){
-		$this->_current_route_basename = $url;
-		if($closure!==false){
-			$closure();
-		}
-	}
-	
-	function dispatch($level='content'){
- 
-		
-		$accepted_routes = array();
-		$url=urldecode(strtok($_SERVER["REQUEST_URI"],'?'));
-		foreach($this->routes as $route){
-			if($route->check($url,$_SERVER['REQUEST_METHOD'])){
-				$accepted_routes[]=$route;
-			}
-		}
-		if(count($accepted_routes)){
-			$this->current_route = $accepted_routes[0];
-			$result = $accepted_routes[0]->dispatch($url);
-			$this->current_route = false;
-			return $result;
-		}
-		return false;
-	}
-	function new_pipe()
-	{
-		return new Zend\Stratigility\MiddlewarePipe();
-	}
-	function add($path=false, $middleware = null){
-		/* обёртка для запуска как иконки {{add}}, так и для добавления middleware */
-		if(is_array($path) || $path === false){
-			return d()->call('add',$path);
-		}
-		$this->middleware_pipe->pipe($path, $middleware);
-	}
-	
-	function pipe($path, $middleware = null){
-		$this->middleware_pipe->pipe($path, $middleware);
-	}
-	function write($text){
-		$this->http_response->getBody()->write($text);
-	}
-	/* Функция, стартующая вообще всё. */
-	function main(){
-		
-		if(PHP_VERSION_ID > 50408) {
-			$this->middleware_pipe->pipe(function($request, $response, $next){
-				$response->getBody()->write($this->call('main'));
-			});
-			
-			$pipe = $this->middleware_pipe;
-			$pipe($this->http_request, $this->http_response);
-			 
-			return $this->http_response->getBody();
-		}
-		return $this->call('main');
-	}
-	
-	/*
-		Функция, загружающая контент страницы
-	*/
-	public function content()
-	{
-		//1. (пропускаем) ищем функции (роуты, которые мы можем выполнить, и выполняем их)
-		//3. Передаём дальше в content
-		//d()->router->dispatch();
-		$result = d()->dispatch();
-		if($result === false){
-			return d()->call('content');
-		}
-		return $result;
-		
-		
-	}
-	/* END VERSION 2.0 */
 	
 	
 
@@ -1934,6 +1828,254 @@ foreach($tmparr as $key=>$subval)
 		}
 		return $result;
 	}
+
+	
+	/* VERSION 2.0 */
+	public $routes=array();
+	function route($adress, $closure=false){
+		$route = new Route();
+		$route->map($adress, $closure);
+		$route->initiateAutoFind($this->_current_include_directory);
+		$this->routes[]=$route;
+		return $route;
+	}
+	
+	function post($adress, $closure=false){
+		$route = new Route();
+		$route->map($adress, $closure);
+		$route->method = array('POST');
+		$route->initiateAutoFind($this->_current_include_directory);
+		$this->routes[]=$route;
+		return $route;
+	}
+	
+	function get($adress, $closure=false){
+		$route = new Route();
+		$route->map($adress, $closure);
+		$route->method = array('GET');
+		$route->initiateAutoFind($this->_current_include_directory);
+		$this->routes[]=$route;
+		return $route;
+	}
+	
+	function group($url, $closure=false){
+		$this->_current_route_basename = $url;
+		if($closure!==false){
+			$closure();
+		}
+	}
+	
+	function dispatch($level='content'){
+ 
+		
+		$accepted_routes = array();
+		$url=urldecode(strtok($_SERVER["REQUEST_URI"],'?'));
+		foreach($this->routes as $route){
+			if($route->check($url,$_SERVER['REQUEST_METHOD'])){
+				$accepted_routes[]=$route;
+			}
+		}
+		if(count($accepted_routes)){
+			$this->current_route = $accepted_routes[0];
+			$result = $accepted_routes[0]->dispatch($url);
+			$this->current_route = false;
+			return $result;
+		}
+		return false;
+	}
+	function new_pipe()
+	{
+		return new Zend\Stratigility\MiddlewarePipe();
+	}
+	function add($path=false, $middleware = null){
+		/* обёртка для запуска как иконки {{add}}, так и для добавления middleware */
+		if(is_array($path) || $path === false){
+			return d()->call('add',$path);
+		}
+		$this->middleware_pipe->pipe($path, $middleware);
+	}
+	
+	function pipe($path, $middleware = null){
+		$this->middleware_pipe->pipe($path, $middleware);
+	}
+	function write($text){
+		$this->http_response->getBody()->write($text);
+	}
+	/* Функция, стартующая вообще всё. */
+	function main(){
+		
+		if(PHP_VERSION_ID > 50408) {
+			$this->middleware_pipe->pipe(function($request, $response, $next){
+				$response->getBody()->write($this->call('main'));
+			});
+			
+			$pipe = $this->middleware_pipe;
+			$pipe($this->http_request, $this->http_response);
+			 
+			return $this->http_response->getBody();
+		}
+		return $this->call('main');
+	}
+	
+	/*
+		Функция, загружающая контент страницы
+	*/
+	public function content()
+	{
+		//1. (пропускаем) ищем функции (роуты, которые мы можем выполнить, и выполняем их)
+		//3. Передаём дальше в content
+		//d()->router->dispatch();
+		$result = d()->dispatch();
+		if($result === false){
+			return d()->call('content');
+		}
+		return $result;
+		
+		
+	}
+	/* END VERSION 2.0 */
+		
+	
+	/* VERSION 3.0 */
+	function __construct(){
+		
+		self::$instance = $this;
+		
+		if(!defined('DOIT_ROOT')){
+			define ('DOIT_ROOT', substr( dirname(__FILE__) ,0,-9));
+		}
+		//server name without www
+		if(!defined('DOIT_SERVER_NAME')){
+			define('DOIT_SERVER_NAME',preg_replace('/^www./i','',$_SERVER['SERVER_NAME']));
+		}
+		
+		//сначала инициализируются файлы из ./cms, затем из ./app
+		$_work_folders = array('lib','app');
+		if(file_exists(DOIT_ROOT.'/sites/'.DOIT_SERVER_NAME)){
+			$_work_folders[]='sites/'.DOIT_SERVER_NAME;
+		}else{
+			preg_match('#(^.*?)\.#',DOIT_SERVER_NAME,$m);
+			$subdomain = ($m[1]);
+			if(file_exists(DOIT_ROOT.'/sites/'.$subdomain)){
+				$_work_folders[]='sites/'.$subdomain;
+			}
+		}
+		$disabled_modules=array();
+		if(defined('DISABLED_MODULES')){
+			$disabled_modules=explode(',',DISABLED_MODULES);
+		}
+		$ignore_subfolders = array('.','..','internal','external','fields','vendor');
+		$simple_folders = array();
+		foreach($_work_folders as $dirname) { 
+			$simple_folders[] =  $dirname ;
+			$_files[$dirname]['/']=array();
+			$_handle = opendir(DOIT_ROOT.'/'.$dirname);
+
+			while (false !== ($_file = readdir($_handle))) {
+				if (is_dir(DOIT_ROOT.'/'.$dirname .'/'. $_file) && !in_array($_file, $ignore_subfolders) ){
+					$simple_folders[] = $dirname.'/'.$_file;
+				} else {
+					$_files[$dirname]['/'][]=$_file;
+				}
+			}
+			closedir($_handle);
+		}
+		$for_include = array();
+		$autoload_folders = array();
+		foreach($simple_folders as $folder){
+			$_handle = opendir(DOIT_ROOT.'/'.$folder);
+			while (false !== ($_file = readdir($_handle)) ) {
+				if (strrchr($_file, '.')=='.php' ) {
+					$fistrsim = $_file{0};
+					if($fistrsim>='A' && $fistrsim<='Z'    ){
+						$autoload_folders[$folder]=true;
+					}else{
+						$for_include[$folder.'/'.$_file] = $folder.'/'.$_file;
+					}
+				}
+				//Is directory name started ad uppercase letter
+				if(is_dir(DOIT_ROOT.'/'.$folder.'/'.$_file)){
+					$fistrsim = $_file{0};
+					if($fistrsim>='A' && $fistrsim<='Z'    ){
+						$autoload_folders[$folder]=true;
+					}
+				}
+				
+			}
+		}
+		
+
+		if(count($autoload_folders)!==0){
+			Doit::$autoload_folders = array_keys($autoload_folders);
+		 
+			spl_autoload_register(function  ($class_name) {
+
+				$class_name = ltrim($class_name, '\\');
+				$fileName  = '';
+				$namespace = '';
+				if ($lastNsPos = strripos($class_name, '\\')) {
+					$namespace = substr($class_name, 0, $lastNsPos);
+					$class_name = substr($class_name, $lastNsPos + 1);
+					$fileName  = str_replace('\\', DIRECTORY_SEPARATOR, $namespace) . DIRECTORY_SEPARATOR;
+				}
+				$fileName .= str_replace('_', DIRECTORY_SEPARATOR, $class_name) . '.php';
+				$lover_class_name=strtolower($class_name);
+				
+				foreach (Doit::$autoload_folders as $path){
+					if(is_file(DOIT_ROOT.'/'. $path . '/'.$fileName  )){
+						require DOIT_ROOT.'/'. $path . '/'.$fileName ;
+						return;
+					}	
+				}
+				 
+
+			},true,true);
+		}
+		foreach($for_include as $value) {
+			
+			$this->_current_include_directory = dirname(DOIT_ROOT.'/'.$value);
+			
+			$this->_current_route_basename = false;
+			include(DOIT_ROOT.'/'.$value);
+			$this->_current_route_basename = false;
+		}		
+		
+		
+	}
+	function runApplication(){
+		
+		//Creating PSR-7 middleware, request and response
+		$this->http_request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
+			$_SERVER,
+			$_GET,
+			$_POST,
+			$_COOKIE,
+			$_FILES
+		);
+		
+		$this->http_response = new Zend\Diactoros\Response();
+		$this->http_response = $this->http_response->withHeader('Content-type','text/html');
+		$this->middleware_pipe=new Zend\Stratigility\MiddlewarePipe();
+		
+		$this->middleware_pipe->pipe(function($request, $response, $next){
+			//Running code here
+			$response->getBody()->write($this->dispatch());
+		});
+		
+		$pipe = $this->middleware_pipe;
+		$pipe($this->http_request, $this->http_response);
+		 
+		foreach ($this->http_response->getHeaders() as $name => $values) {
+			foreach ($values as $value) {
+				header(sprintf('%s: %s', $name, $value), false);
+			}
+		}
+		$exec_time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
+		header("X-Core-Runtime: {$exec_time}s, ". memory_get_usage(true).'b');
+		print $this->http_response->getBody();
+		
+	}
+	
 }
 
 
