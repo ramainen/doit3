@@ -75,9 +75,17 @@ class Doit
 	//group
 	public $_current_route_basename=false;
 	
-	public $http_request = false;
-	public $http_response = false;
+	public $request = false;
+	public $response = false;
 	public $middleware_pipe = false;
+	
+	
+	private $_routes_count;
+	private $_current_route_deep;
+	private $_routes_list = array();
+	
+	
+	
 /* ================================================================================= */	
 	function old__construct()
 	{
@@ -810,24 +818,7 @@ foreach($tmparr as $key=>$subval)
 	}
 
 		
-	private function validate_global_handlers()
-	{
-		if(isset($_POST['_global_sign']) && isset($_SESSION['_form_sign_key']) && $_SESSION['_form_sign_key']!=''){
-			$current_sign = $_POST['_global_sign'];
-			$run_before_sign='';
-			if(isset($_POST['_run_before']) && $_POST['_run_before']!=''){
-				$run_before_sign = md5($_POST['_run_before']);
-			}
-			
-			$real_sign = sha1('salt_sign'.md5($_SESSION['_form_sign_key']).md5($_POST['_element']).md5($_POST['_action']).$run_before_sign);
-			if($real_sign===$current_sign){
-				//подпись верна, считаем данные верными
-				return d()->call($_POST['_action']);
-			}
-		}
-		return '';
-		
-	}
+ 
 
 	/**
 	 * Добавляет сообщение об ошибке валидации формы в существующий список
@@ -917,272 +908,7 @@ foreach($tmparr as $key=>$subval)
 		return false;
 	}
 
-	/**
-	 * Функция, возвращающая фрагменты текущего URL, начиная с 1.
-	 * Например, для адреса /users/ainu/comments/3 url(1)="users", url(4)="3", url("users")="ainu", url(2,2)="ainu/comments"
-	 * Без параметров возвращает весь URL.
-	 * URL используется преобразованный (например, /users/ -> /users/index)
-	 *
-	 * @param $param Номер фрагмента или имя предыдущего фрагмента для поиска. Например, url("comments")=3
-	 * @param int $length Количество возвращамых фрагментов, включая текущий по умолчанию 1. Если отрицательно, отсчёт идёт с конца
-	 * @return bool|string Искомый фрагмент
-	 */
-	public function url($param='',$length=1)
-	{
-		if($param=='') {
-			$param = 1;
-			$length = count($this->url_parts);
-		}
-		if($length<=0) {
-			$length = count($this->url_parts) + $length - 1;
-		}
-		if(!is_numeric($param)) {
-			
-			//url('users')
-			$readyindex=false;
-			$i=0;
-			foreach ($this->url_parts as $key => $value) {
-				$i++;
-				if($value==$param) {
-					$readyindex = $i;
-					break;
-				}
-			}
-			if ($readyindex === false) {
-				return false;
-			}
-			$param = $readyindex + 1; 
-		}
-		//TODO: возвращать false	
-		$tmpstr = '';
-		for($i=0;$i<=$length-1;$i++) {
-			if ($i > 0) {
-				$tmpstr.= '/';
-			}
-			$tmpstr.= $this->url_parts[$param + $i - 1];
-		}
-		return $tmpstr;
-	}
-
-	/**
-	 * Вызывает методы основного класса (функции), используя всевозможные переопределения, проверки и так далее.
-	 * d()->call('func') это полный аналог d()->func()
-	 * В случае наличия решётки, создаёт экземпляр (если не создан) и вызывает метод класса контроллера
-	 * d('users#create') == d()->users_controller->create();
-	 * В первую очередь ищет функцию с подходящим именем, затем .php файл с подходящим именем, затем .html c подходящим
-	 * именем. Если существует и функция и html файл с одинаковыми именами, для доступа к html-файлу используется
-	 * суффикс _tpl (например, d()->call('users_show_tpl')). При наличии правила в роутере вызывает несколько функций
-	 * согласно правилам.
-	 * Если запущен в виде d()->call('func1','func2','func3'), то запускает функции по-очереди в не зависимости от
-	 * правил роутера
-	 * [DEPRECATED] При наличии одноимённого ini файла (т.е. без суффикса .init.ini) проанализирает и загрузит его.
-	 *
-	 * @param $name Имя функции/класса-метода/php-файла/шаблона
-	 * @param array $arguments Массив параметров, передаваемых в вызываемую функцию
-	 * @return mixed|string|void Результат (как правило, HTML-код)
-	 */
-	public function call($name, $arguments=array())
-	{
-		
-		$fistrsim = $name{0};
-		if($fistrsim>='A' && $fistrsim<='Z'){
-			return new $name($arguments);
-		}
-		
-		if(!$this->is_root_func){
-			$this->is_root_func = true;
-			$i_am_root=true; //Если установлено, данная функция - первая
-		}else{
-			$i_am_root=false;
-			if($this->must_be_stopped){
-				return '';
-			}
-		}
-		
-		if(isset($this->_prepared_content[$name])){
-			$content=$this->_prepared_content[$name];
-			unset($this->_prepared_content[$name]);
-			return $content;
-		}
-		
-		//DEPRECATED, отмена использования конструкции
-		/*
-		if (count($arguments)!=0 && is_array($arguments[0])) {
-			foreach($arguments[0] as $key=>$value) {
-				$this->datapool[$key]=$value;
-			}
-		}
-		*/
-		
-		
-		if($this->_run_before !== false && $this->_run_before==$name){
-			$this->_run_before = false;
-			print $this->validate_global_handlers();
-		}	
-		
-		$_result_end='';
-		if (!is_array($arguments)) {
-			$_newnames = func_get_args();  //d()->call('first','second','clients#edit','clients_tpl');
-			$arguments=array();
-		} else {
-			$_newnames = $this->get_function_alias($name);
-		}
-		$_currentname=$name;
-		$_continuechain = true;
-		
-		if($this->_active_function()==$name){
-			$this->validate_disabled=true;
-		}
-		for($i=0;$i<=count($_newnames)-1;$i++) {
-			$_newname = $_newnames[$i];
-			//DEPRECATED - сделать явные вызовы
-
-			$name=$_newname;
-			//Проверка на существование фрагмента fragment_tpl, если самой функции нет
-			if ( (!function_exists($name)) && (!isset($this->php_files_list[$name])) && (isset( $this->fragmentslist[$name."_tpl"]))) {
-				$name = $name."_tpl";
-			}
-			$this->call_chain_level++; //поднимаем уровень текущего стека очереди
-			//Сохраняем текущую цепочку команд
-			$this->call_chain[$this->call_chain_level] = $_newnames;
-			$this->call_chain_start[$this->call_chain_level]=$_currentname;
-			$this->call_chain_current_link[$this->call_chain_level]=$i;
-			//Тут вызываются предопределённые и пользовательские функции
-			ob_start('doit_ob_error_handler');
-			$been_controller=false;
-			if(isset($this->datapool[$name]) && ($this->datapool[$name] instanceof Closure)) {
-				//Сохраняем путь, в котором был инициирована Closure
-				$this->_closure_current_view_path = $this->_closure_directories[$name];
-				$_executionResult=call_user_func_array($this->datapool[$name], $arguments);
-			}elseif (function_exists($name)) {
-
-				//Подстановка аргументов из $this->_last_router_rule
-				//$this->_last_router_rule содержит активное правило роутера (например, "/users/")
-				//Передача параметров URL в методы классов и функции
-				if(count($arguments)==0 && $this->_last_router_rule!='') {
-					$params_arr=explode('/',substr($this->_last_router_rule,1));
-					foreach($this->url_parts as $_part_num => $_part_val){
-						if(!isset($params_arr[$_part_num]) || $params_arr[$_part_num]==''){
-							$arguments[]=$_part_val;
-						}
-					}
-				}
-				
-				$_executionResult=call_user_func_array($name, $arguments);
-				$been_controller=true;
-			} elseif(isset($this->php_files_list[$name])){
-				include ($_SERVER['DOCUMENT_ROOT'].'/'.$this->php_files_list[$name]);
-				$been_controller=true;
-			}elseif(isset($this->callables[$name])){
-				$_executionResult=call_user_func_array($this->callables[$name], $arguments);
-			} else {
-				$_fsym=strpos($name,'#');
-				if($_fsym !== false) {
-
-					//Подстановка аргументов из $this->_last_router_rule
-					//дублирование кода, расположенного выше (для скорости)
-					//Для того, чтобы не проводить операцию для шаблонов и включаемых php-файлов
-					if(count($arguments)==0 && $this->_last_router_rule!='') {
-						$params_arr=explode('/',substr($this->_last_router_rule,1));
-						foreach($this->url_parts as $_part_num => $_part_val){
-							if(!isset($params_arr[$_part_num]) || $params_arr[$_part_num]==''){
-								$arguments[]=$_part_val;
-							}
-						}
-					}
-
-					$_classname=substr($name,0,$_fsym).'Controller';
-					
-					$_first_letter=strtoupper(substr($_classname,0,1));
-					$_classname = $_first_letter.substr($_classname,1);
-
-					$_methodname=substr($name,$_fsym+1);
-					$_chain_method=$_methodname;
-					if($_methodname=='') {
-						if(is_numeric($arguments[0])){
-							$_methodname = 'show';
-							$_chain_method=$_methodname;
-						}else{
-							if($arguments[0]==''){
-								$_methodname='index';
-								$_chain_method=$_methodname;
-							}else{		
-								if(method_exists($_classname,$arguments[0])){
-									$_methodname=$arguments[0];
-									$_chain_method=$_methodname;
-								}else{
-									$_methodname='show';
-									//Если файл controller_$arguments.html существует то все нормально
-									if(substr($name,0,$_fsym) == 'pages' && isset($this->fragmentslist[substr($name,0,$_fsym).'_'.$arguments[0].'_tpl'])){
-										$_chain_method=$arguments[0];
-									}else{
-										$_chain_method='show';
-									}
-								}
-							}
-							unset($arguments[0]);
-						}
-						//В случае вызова controller# переменовывается цепочка для нормального определения вида исход из имени метода
-						$this->call_chain[$this->call_chain_level][$this->call_chain_current_link[$this->call_chain_level]]=$name.$_chain_method;
-					}
-					//$_executionResult=call_user_func_array(array($this->universal_controller_factory($_classname), $_methodname), $arguments);
-					call_user_func_array(array($this->{$_classname}, 'before'), array($_methodname, $arguments));
-					$_executionResult=call_user_func_array(array($this->{$_classname}, $_methodname), $arguments);
-					call_user_func_array(array($this->{$_classname}, 'after'), array($_methodname, $arguments));
-					$been_controller=true;
-				
-				} else {
-					$_executionResult= $this->compile_and_run_template($name);
-				}
-			}
-			$_end = ob_get_contents();
-			ob_end_clean();
-			
-			
-			
-			if($been_controller && ($_end=='') && (is_null($_executionResult) || $_executionResult=='')){
-				
-				//Определяем функцию (контроллер), из которого был произведён вызов. Припиываем _tpl, вызываем
-				$parent_function =  $this->_active_function();
-				if(substr($parent_function,-4)!='_tpl'){
-					$parent_function .= '_tpl';
-					$parent_function =  str_replace('#','_',$parent_function);
-					if(isset($this->fragmentslist[$parent_function])){
-						ob_start('doit_ob_error_handler');
-						$_executionResult= $this->call($parent_function);
-						$_end = ob_get_contents();
-						ob_end_clean();
-					}
-				}
-			}
-			
-			if (!is_null($_executionResult)) {
-				$_end = $_executionResult;
-			}
-			//Загружаем актуальную цепочку команд. call_chain могла измениться
-			$_newnames = $this->call_chain[$this->call_chain_level];
-			$i = $this->call_chain_current_link[$this->call_chain_level];
-			$this->call_chain_level--; //опускаем уровень текущего стека очереди
-			if (count($_newnames)==1) {
-				if($i_am_root && $this->must_be_stopped){
-					$this->validate_disabled=false;
-					return $this->do_redirect();
-				}
-				$this->is_root_func=false;
-				$this->validate_disabled=false;
-				return $_end;
-			} else {
-				$_result_end .= $_end;
-			}
-		}
-		if($i_am_root && $this->must_be_stopped){
-			$this->validate_disabled=false;
-			return $this->do_redirect();
-		}
-		$this->is_root_func=false;
-		$this->validate_disabled=false;
-		return $_result_end;
-	}
+	 
 
 	/**
 	 * Возвращает скомпилированный в PHP шаблон на основе HTML-файла.
@@ -1229,18 +955,7 @@ foreach($tmparr as $key=>$subval)
 
 	}
 
-	/**
-	 * Кaллер (caller), срабатывает при всех возможных запросах вроде d()->func()
-	 * Полностью передаёт управление и параметры методу d()->call()
-	 *
-	 * @param $name Имя функции/php-файла/щаблона
-	 * @param $arguments Массив параметров для передачи функции
-	 * @return mixed|string|void Результат, как правило, HTML-код
-	 */
-	public function __call($name, $arguments)
-	{
-		return 	$this->call($name, $arguments);
-	}
+
 
 
 	/**
@@ -1321,15 +1036,6 @@ foreach($tmparr as $key=>$subval)
 			$result = new $name();
 			return $result;
 		}
-
-		//Проверка префиксов для модулей для модулей и расширений
-		//TODO: это слишком медленно
-		//DEPRECATED
-		foreach ($this->datapool['prefixes'] as $_one_prefix) {
-			if(preg_match($_one_prefix[0], $name)) {
-				return $this->{$_one_prefix[1]}($name);
-			}
-		}
 		
 		if($name!='this'){
 			if(is_object($this->this)) {
@@ -1351,16 +1057,7 @@ foreach($tmparr as $key=>$subval)
 		unset($this->datapool[$name]);
 	}
  
-	/**
-	 * Возвращает имя текущей функции (триады). Даже если в её теле запускались другие функции, текущая не потеряется
-	 * Внутри вложенных функций текущая функция будет другой. Внутренняя. Используется при обработке ошибок
-	 * и при запуске d()->view()
-	 * @return mixed Название функции
-	 */
-	public function _active_function()
-	{
-		return $this->call_chain[$this->call_chain_level][$this->call_chain_current_link[$this->call_chain_level]];
-	}
+ 
 
 	/**
 	 * Запускает имя_функции.tpl.html, либо пытается угадать имя текущей триады
@@ -1387,129 +1084,8 @@ foreach($tmparr as $key=>$subval)
 	}
 
 
-	/**
-	 * При использовании цепочки функций (когда роутер вместо одной функции переопределяет сразу несколько):
-	 * /contacts   content  page_show  feedback_show   maps_show
-	 * Меняет следующий элемент цепочки. Если мы использует контролер и шаблон как цепочку, позволяет менять шаблон
-	 * Если в цепочке элементов нет (например, функция только одна), то просто выполнит запрошенную
-	 * функцию после текущей. При этом переопределения при помощи роутера уже не используются.
-	 *
-	 * @param $chainname Имя функции/php-файла/контролера-метода/html-шаблона
-	 */
-	public function set_next_chain($chainname)
-	{
-		$this->call_chain[$this->call_chain_level][$this->call_chain_current_link[$this->call_chain_level]+1] = $chainname;
-	}
-/* ================================================================================= */
-
-	/**
-	 * При использовании цепочки функций (когда роутер вместо одной функции переопределяет сразу несколько):
-	 * /contacts   content  page_show  feedback_show   maps_show
-	 * Удаляет все последующие функции из цепочки, следующие за текущей.
-	 */
-	public function stop_next_chains()
-	{
-		$this->call_chain_current_link[$this->call_chain_level] = count($this->call_chain[$this->call_chain_level])+1;
-	}
-
-	/**
-	 * Пока не работает
-	 * @param $chainname
-	 */
-	public function insert_next_chain($chainname)
-	{
-		//$this->call_chain[$this->call_chain_level][$this->call_chain_current_link[$this->call_chain_level]+1] = $chainname;
-	}
-
-	//Устанавливает правила для дальнейшего анализа	цепочки
-	//DEPRECATED: слишком сложно
-	function route_to($routename='')
-	{
-		if($routename=='') {
-			return;
-		}
-		$parent_root = $this->call_chain_start[$this->call_chain_level];
-		
-		$addition_array=array();
-		foreach($this->datapool['urls'] as $rule) {
-			if (($rule[0]==$routename) && ($rule[1]==$parent_root)) {
-				unset($rule[1]);
-				unset($rule[0]);
-				$addition_array = $rule;
-				foreach($addition_array as $element) {
-					array_push ($this->call_chain[$this->call_chain_level],$element);
-				}
-				break;
-			}
-		}
-	}
-
-
-	//Проверяет URL и анализирует текущий массив правил, при наличии подходящего, возвращает массив всевдонимов (цепочку)
-	function get_function_alias($name)
-	{
-		static $cache_ansver=array(); //Кеш ответов для быстрого реагирования
-		static $cache_longest_url_ansver=array(); //Кеш ответов для быстрого реагирования
-		static $rules_array = false; //Ассоциативный массив правил для того, чтобы не опрашивать весь список
-		if ($name===false){
-			$cache_ansver=array(); 
-			$cache_longest_url_ansver=array();
-			$rules_array = false;
-			return false;
-		}
-		if($rules_array===false) {	
-			$tmp_mached_list = array();
-			foreach($this->datapool['urls'] as $rule) {
-				$rule_place = str_replace('.html', '_tpl', $rule[1]);
-				if(!isset($tmp_mached_list[$rule_place])) {
-					$tmp_mached_list[$rule_place] = array();
-				}
-				$tmp_mached_list[$rule_place][] = $rule;
-			}
-			$rules_array = $tmp_mached_list;
-		}
-
-		$this->_last_router_rule='';
-
-		if(!isset($rules_array[$name])) {
-			return array($name);
-		}
-		
-		if(isset($cache_ansver[$name])) {
-			$this->_last_router_rule=$cache_longest_url_ansver[$name];
-			return $cache_ansver[$name];
-		}
-
-		$matched=array('','',$name);
-		$longest_url='';
-		$longest_url_length=0;
-		$_requri = $this->url_string;
-
-		//Определение наиболее подходящего правила в списке правил роутинга. Наиболее длинное из подходящих - приоритетнее.
-		foreach($rules_array[$name] as $key=>$value) {
-			$strlen_value_0 = strlen($value[0]);
-			if (is_numeric($key) && ($strlen_value_0 > $longest_url_length) && (
-				$_requri==$value[0]
-				|| substr($_requri,0,$strlen_value_0)==$value[0] 
-				|| preg_match('/^'.str_replace('\/\/','\/.+?\/',str_replace('/','\/',preg_quote($value[0]))).'.*/',$_requri)
-				|| ($value[0]{0} === '^' &&  preg_match('#' . $value[0] . '#',$_requri))
-				)) {
-					$matched=$value;
-					$longest_url=$value[0];
-					$longest_url_length = strlen($longest_url);
-				}
-		}
-		unset($matched[0]);
-		unset($matched[1]);
-		
-		$matched = str_replace('.html', '_tpl', $matched );
-		
-		$matched=array_values($matched);
-		$cache_ansver[$name] = $matched;
-		$cache_longest_url_ansver[$name] = $longest_url;
-		$this->_last_router_rule=$cache_longest_url_ansver[$name];
-		return $matched;
-	}
+ 
+  
 /* ================================================================================= */
 	function shablonize($_str)
 	{	
@@ -1742,62 +1318,15 @@ foreach($tmparr as $key=>$subval)
 		}
 		return d()->redirect('/error_'.$error_page);
 	}
+	 
 	
-	function redirect($url)
-	{
-		//Обрезка GET-параметров
-		$_tmpurl=urldecode($url);
-
-		$_where_question_sign = strpos($_tmpurl,'?');
-		if($_where_question_sign !== false) {
-			$_tmpurl = substr($_tmpurl, 0, $_where_question_sign); 
-		}
-		
-		//приписывание в конце слешей index
-		if(substr($_tmpurl,-1)=='/') {
-			$_tmpurl=$_tmpurl."index";
-		}
-		$this->url_string = $_tmpurl;
-		
-		//сохранение фрагментов url
-		$this->url_parts=explode('/',substr($_tmpurl,1));
-		$this->get_function_alias(false);
-		$this->must_be_stopped=true;
-		return true;
-	}
-	
-	function do_redirect()
-	{
-		$this->is_root_func=false;
-		$this->must_be_stopped=false;
-		return d()->call('main');
-	}
+ 
 	function prepare_content($function,$content)
 	{
 		$this->_prepared_content[$function]=$content;
 	}
 	
-	/**
-	 * Перенапрвляет браузер при помощ заголовка и завершает код скрипта.
-	 * В случае использования AJAX делает немного магии.
-	 * 
-	 * @param $url Адрес для пернаправления
-	 */
-	function reload($url=false)
-	{
-		if(AJAX){
-			print $this->Ajax->get_compiled_response();
-			header('Content-type: text/javascript; Charset=UTF-8');
-			exit();
-		}
-		if($url==false) {
-			$url=$_SERVER['REQUEST_URI'];
-		}
-		header('Location: '.$url);
-		exit();
-	}
-	
-	
+ 
 	function prepare_smart_array($string)
 	{
 		$res=array();
@@ -1898,10 +1427,67 @@ foreach($tmparr as $key=>$subval)
 		$this->middleware_pipe->pipe($path, $middleware);
 	}
 	function write($text){
-		$this->http_response->getBody()->write($text);
+		$this->response->getBody()->write($text);
 	}
 
+	
+	
+		/**
+	 * Кaллер (caller), срабатывает при всех возможных запросах вроде d()->func()
+	 * Полностью передаёт управление и параметры методу d()->call()
+	 *
+	 * @param $name Имя функции/php-файла/щаблона
+	 * @param $arguments Массив параметров для передачи функции
+	 * @return mixed|string|void Результат, как правило, HTML-код
+	 */
+	public function __call($name, $arguments)
+	{
+		return 	$this->call($name, $arguments);
+	}
 
+	
+	/**
+	 * Вызывает методы основного класса (функции), используя всевозможные переопределения, проверки и так далее.
+	 * d()->call('func') это полный аналог d()->func()
+	 * @param $name Имя функции
+	 * @param array $arguments Массив параметров, передаваемых в вызываемую функцию
+	 * @return mixed|string|void Результат (как правило, HTML-код)
+	 */
+	public function call($name, $arguments=array())
+	{
+		
+		$fistrsim = $name{0};
+		if($fistrsim>='A' && $fistrsim<='Z'){
+			return new $name($arguments);
+		}
+
+		ob_start('doit_ob_error_handler');
+		//Closure
+		if(isset($this->datapool[$name]) && ($this->datapool[$name] instanceof Closure)) {
+			//Сохраняем путь, в котором был инициирована Closure
+			$this->_closure_current_view_path = $this->_closure_directories[$name];
+			$_executionResult=call_user_func_array($this->datapool[$name], $arguments);
+		//function
+		}elseif (function_exists($name)) {
+			$_executionResult=call_user_func_array($name, $arguments);
+		//controller
+		} else {
+			$_fsym=strpos($name,'#');
+			if($_fsym !== false) {
+				//Вызов метода контроллера???
+			} 
+		}
+		$_end = ob_get_contents();
+		ob_end_clean();
+		
+		if (!is_null($_executionResult)) {
+			$_end = $_executionResult;
+		}
+	 	return $_end;
+
+	}
+	
+	
 	/* END VERSION 2.0 */
 		
 	
@@ -2001,20 +1587,7 @@ foreach($tmparr as $key=>$subval)
 			},true,true);
 		}
 		
-		
-		
-		
-		
-		//Creating PSR-7 middleware, request and response
-		$this->http_request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
-			$_SERVER,
-			$_GET,
-			$_POST,
-			$_COOKIE,
-			$_FILES
-		);
-		
-		$this->http_response = new Zend\Diactoros\Response();
+
 		$this->middleware_pipe=new Zend\Stratigility\MiddlewarePipe();
 		
 		
@@ -2032,10 +1605,30 @@ foreach($tmparr as $key=>$subval)
 		
 		
 	}
+	
+	function next(){
+		$request = d()->request;
+		$response = d()->response ; 
+		
+		if($this->_routes_count - 1 > $this->_current_route_deep){
+
+			$current_route  = $this->current_route;
+			$this->_current_route_deep++;
+			$this->current_route = $this->_routes_list[$this->_current_route_deep];
+			
+			$current_route = $this->_routes_list[$this->_current_route_deep];
+			d()->response = $current_route($request, $response);
+			$this->current_route = false;
+				
+			$this->current_route = 	$current_route ;
+			return $response;
+		}
+	}
+	
 	function runApplication(){
 		
 
-		$this->http_response = $this->http_response->withHeader('Content-type','text/html');
+		//$this->http_response = $this->http_response->withHeader('Content-type','text/html');
  
  
 		$request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
@@ -2063,19 +1656,18 @@ foreach($tmparr as $key=>$subval)
 				return ($a->priority > $b->priority) ? -1 : 1;
 			});
 			
-			
-			if(count($accepted_routes)){
-				$this->current_route = $accepted_routes[0];
-				$current_route = $accepted_routes[0];
+			$this->_routes_list = $accepted_routes;
+			if(count($this->_routes_list)){
+				$this->_routes_count = count($this->_routes_list);
+				$this->_current_route_deep =0;
+				
+				$this->current_route = $this->_routes_list[0];
+				$current_route = $this->_routes_list[0];
 				$response = $current_route($request, $response);
 				$this->current_route = false;
 				return $response;
 			}
 			
-			
-			
-			
-		//	$response->getBody()->write($this->dispatch());
 		});
 		
 		$pipe = $this->middleware_pipe;
@@ -2096,6 +1688,4 @@ foreach($tmparr as $key=>$subval)
 
 
 
-
-
-/* END OF cms.php */
+ 

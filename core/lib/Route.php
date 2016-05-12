@@ -11,6 +11,9 @@ class Route
 	public $include_directory = false;
 	public $basename = ''; //Имя папки, в которой мы находимся. Также может быть задано из группы роутов при помощи d()->group
 	public $priority = 1000;
+	
+ 
+	
 	public function via($via=false){
 		if(!is_array($via)){
 			$via = array($via);
@@ -111,9 +114,12 @@ class Route
 		return $_end;
 	}
 	*/
+	
+	
+ 
 	public function __invoke(Request $request, Response $response, callable $out = null)
     {
-		
+
 		$url = urldecode(strtok($request->getRequestTarget(),'?'));
 		$matches = array();
 		$regex = $this->url;
@@ -124,10 +130,16 @@ class Route
 		unset($matches[0]);
 		ob_start('doit_ob_error_handler');
 		//TODO: error handler
-		$matches[]=$request;
-		$matches[]=$response;
-
-		$_executionResult = call_user_func_array($this->closure,$matches);
+	
+		Doit::$instance->request = $request;
+		Doit::$instance->response = $response;
+		
+		call_user_func_array($this->closure,$matches);
+		
+		
+		$request = Doit::$instance->request ;
+		$response = Doit::$instance->response ;
+		
 		$_end = ob_get_contents();
 		ob_end_clean();
 		if (!is_null($_executionResult)) {
@@ -141,7 +153,6 @@ class Route
 		}
 		
 		$response->getBody()->write($_end);
-		//$response = $next($request, $response);
 		
 		return $response;
 		
