@@ -1,7 +1,8 @@
 <?php
 
-d()->route('/:url*',function($url,$request,$response){
+d()->route('/:url*',function($url){
 	print "Текстовая страница :".$url;
-	$response ->withHeader('asdas','asdsdsd2');
-	
+ 
+	// $response->getBody()->write('TT');
+	//d()->http_response = d()->http_response->withHeader('sadasd','asdas');
 });

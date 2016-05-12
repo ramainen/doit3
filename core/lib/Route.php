@@ -10,6 +10,7 @@ class Route
 	public $closure=false;
 	public $include_directory = false;
 	public $basename = ''; //Имя папки, в которой мы находимся. Также может быть задано из группы роутов при помощи d()->group
+	public $priority = 1000;
 	public function via($via=false){
 		if(!is_array($via)){
 			$via = array($via);
@@ -19,6 +20,8 @@ class Route
 	/*
 		Передает текущую директорию, из которого вызвана. Инициирует автопоиск шаблонов, автогруппы роутов.
 	*/
+ 
+	
 	public function initiateAutoFind($directory)
 	{
 		if(Doit::$instance->_current_route_basename !== false){
@@ -29,6 +32,13 @@ class Route
 		$this->include_directory = $directory;
 	}
 	
+	public function priority($level=0){
+		$this->priority = strlen(preg_replace(
+			array('#\:[a-z_][a-zA-Z0-9_]*\+#','#\:[a-z_][a-zA-Z0-9_]*\*#','#\:[a-z_][a-zA-Z0-9_]*#'),
+			array('','','')
+		,$this->url)) + $level*1000;
+	}
+	
 	public function map($url,$closure=false)
 	{
 		if($closure===false){
@@ -36,11 +46,19 @@ class Route
 			$url = ':param*';
 		}
 		$this->url=$url;
+		
+		$this->priority = strlen(preg_replace(
+			array('#\:[a-z_][a-zA-Z0-9_]*\+#','#\:[a-z_][a-zA-Z0-9_]*\*#','#\:[a-z_][a-zA-Z0-9_]*#'),
+			array('','','')
+		,$url));
+		
+		
 		$this->closure=$closure;
 	}
 	
 	public function check($url='/catalog', $method=false, $level="content"){
-
+ 
+		
 		//Добавляем путь, который начинается с текущей папки, если путь начинается не на ""/"
 		if($this->url{0}!='/'){
 			$this->url = $this->basename . $this->url;

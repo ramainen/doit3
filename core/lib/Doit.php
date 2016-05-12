@@ -2037,6 +2037,16 @@ foreach($tmparr as $key=>$subval)
 
 		$this->http_response = $this->http_response->withHeader('Content-type','text/html');
  
+ 
+		$request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
+			$_SERVER,
+			$_GET,
+			$_POST,
+			$_COOKIE,
+			$_FILES
+		);
+		
+		$response =  new Zend\Diactoros\Response();
 		
 		$this->middleware_pipe->pipe(function($request, $response, $next){
 			//Running code here
@@ -2048,6 +2058,12 @@ foreach($tmparr as $key=>$subval)
 					$accepted_routes[]=$route;
 				}
 			}
+			
+			usort($accepted_routes, function($a, $b){
+				return ($a->priority > $b->priority) ? -1 : 1;
+			});
+			
+			
 			if(count($accepted_routes)){
 				$this->current_route = $accepted_routes[0];
 				$current_route = $accepted_routes[0];
@@ -2063,16 +2079,16 @@ foreach($tmparr as $key=>$subval)
 		});
 		
 		$pipe = $this->middleware_pipe;
-		$pipe($this->http_request, $this->http_response);
+		$response = $pipe($request, $response);
 		 
-		foreach ($this->http_response->getHeaders() as $name => $values) {
+		foreach ($response->getHeaders() as $name => $values) {
 			foreach ($values as $value) {
 				header(sprintf('%s: %s', $name, $value), false);
 			}
 		}
 		$exec_time = microtime(true) - $_SERVER["REQUEST_TIME_FLOAT"];
 		header("X-Core-Runtime: {$exec_time}s, ". memory_get_usage(true).'b');
-		print $this->http_response->getBody();
+		print $response->getBody();
 		
 	}
 	
