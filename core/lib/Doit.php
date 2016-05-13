@@ -470,12 +470,12 @@ foreach($tmparr as $key=>$subval)
 		
 		$simple_folders = array();
 		
-		foreach($_work_folders as $dirname) { 
+		foreach($_work_folders as $dirname) {
 			$_files[$dirname]['/']=array();
 			$_handle = opendir($_SERVER['DOCUMENT_ROOT'].'/'.$dirname);
 
 			while (false !== ($_file = readdir($_handle))) {
-				 if(substr($_file,0,4)=='mod_') {
+				if(substr($_file,0,4)=='mod_') {
 					if(!in_array(substr($_file,4), $disabled_modules)){
 						$_subhandle = opendir($_SERVER['DOCUMENT_ROOT'].'/'.$dirname.'/'.$_file);
 						$_files[$dirname]['/'.$_file.'/']=array();
@@ -484,12 +484,12 @@ foreach($tmparr as $key=>$subval)
 						}
 						closedir($_subhandle);
 					}
-				 } elseif (is_dir($_SERVER['DOCUMENT_ROOT'].'/'.$dirname .'/'. $_file) && !in_array($_file, $ignore_subfolders) ){
+				} elseif (is_dir($_SERVER['DOCUMENT_ROOT'].'/'.$dirname .'/'. $_file) && !in_array($_file, $ignore_subfolders) ){
 					 //Модули 2.0, список директорий
 					 $simple_folders[] = $dirname.'/'.$_file;
-				 } else {
+				} else {
 					$_files[$dirname]['/'][]=$_file;
-				 }
+				}
 			}
 			closedir($_handle);
 		}
@@ -565,9 +565,6 @@ foreach($tmparr as $key=>$subval)
 					}
 				}
 			}
-			
-			
-			
 		}
 		$autoload_folders = array();
 		
@@ -1088,7 +1085,7 @@ foreach($tmparr as $key=>$subval)
   
 /* ================================================================================= */
 	function shablonize($_str)
-	{	
+	{
 		
 	
 		$_str   = preg_replace($this->template_patterns,$this->template_replacements,str_replace(array("\r\n","\r"),array("\n","\n"),$_str));	
@@ -1521,7 +1518,7 @@ foreach($tmparr as $key=>$subval)
 		}
 		$ignore_subfolders = array('.','..','internal','external','fields','vendor');
 		$simple_folders = array();
-		foreach($_work_folders as $dirname) { 
+		foreach($_work_folders as $dirname) {
 			$simple_folders[] =  $dirname ;
 			$_files[$dirname]['/']=array();
 			$_handle = opendir(DOIT_ROOT.'/'.$dirname);
@@ -1555,7 +1552,6 @@ foreach($tmparr as $key=>$subval)
 						$autoload_folders[$folder]=true;
 					}
 				}
-				
 			}
 		}
 		
@@ -1587,9 +1583,11 @@ foreach($tmparr as $key=>$subval)
 			},true,true);
 		}
 		
-
+		//Objects initiates here
 		$this->middleware_pipe=new Zend\Stratigility\MiddlewarePipe();
-		
+		$this->singleton('view',function(){
+			return new View;
+		});
 		
 		
 		
@@ -1629,7 +1627,6 @@ foreach($tmparr as $key=>$subval)
 		
 
 		//$this->http_response = $this->http_response->withHeader('Content-type','text/html');
- 
  
 		$request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
 			$_SERVER,
