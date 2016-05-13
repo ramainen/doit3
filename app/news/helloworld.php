@@ -1,7 +1,7 @@
 <?php
 
 d()->route('/news/',function(){
-	print "Hello, world from news!";
+	print "(1)";
 	
 	
 	print d()->view->render('view.html');
@@ -9,11 +9,11 @@ d()->route('/news/',function(){
 	d()->response = d()->response->withHeader('sadasd','asdas');
 	
 	
-	d()->response->getBody()->write('TT');
+	d()->response->getBody()->write('(2)');
 	
 	d()->next();
 	
-	print "Конец новостей";
+	print "(3)";
 	
 	
 });
@@ -32,6 +32,6 @@ d()->add('/test/', function($request,$response,$next){
 
 
 d()->route('/news/bobo',function(){
-	
-	
+	//print 2+2;
+	//d()->view->render('view.html');
 });
