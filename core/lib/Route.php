@@ -137,28 +137,21 @@ class Route
 		call_user_func_array($this->closure,$matches);
 		
 		
-		$request = Doit::$instance->request ;
-		$response = Doit::$instance->response ;
+		$request = Doit::$instance->request;
+		$response = Doit::$instance->response;
 		
 		$_end = ob_get_contents();
 		ob_end_clean();
 		if (!is_null($_executionResult)) {
 			$_end = $_executionResult;
-			$response->getBody()->write($_end);
-		} else {
-			//null; ob_start ничего не дал, return в контроллере не было
-			//начинаем рулить шаблон
-			if(!d()->view->isRendered){
-				if($_end == ''){
-					d()->view->render();
-				}else{
-					d()->view->renderHTML($_end);
-				}
-			}
-			
 		}
 		
+		if(d()->view->isNeedRender){
+			d()->content = $_end;
+			$_end = d()->view->renderLayout();	
+		}
 		
+		$response->getBody()->write($_end);
 		
 		return $response;
 		

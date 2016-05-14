@@ -1214,7 +1214,7 @@ class Doit
 		
 		
 	}
-	
+	//Пока использовать нельзя.
 	function next(){
 		$request = d()->request;
 		$response = d()->response ; 

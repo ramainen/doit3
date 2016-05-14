@@ -12,6 +12,6 @@ d()->route('/:url*',function($url){
 	
 	d()->response = d()->response->withHeader('pages','asdas');
 	
-	
+	print d()->view->render();
 	//d()->http_response = d()->http_response->withHeader('sadasd','asdas');
 });

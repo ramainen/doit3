@@ -1,75 +1,49 @@
 <?php
+/*
+	Это экспериментальный класс, который записывает все что попросили в $respone. Эксперимент не удачный.
 
-class View
+*/
+
+die('К сожалению, вы воспользовались устаревшим классом. Файл, который вы подключили имеет сугубо академическую ценность.');
+
+class PSR7View
 {
 	protected $chosen=false;
 	
-	public $layoutTemplate = '_main.html';
-	
 	protected $template_patterns=array(); //Теги шаблонизатора
 	protected $template_replacements=array(); //Значения тегов шаблонизатора
-	
 	public $isRendered = false;
-	public $isNeedRender = false;
 	
 	//todo: render без параметров должен заниматься ТОЛЬКО автопоиском
 	//todo: twig запущенный из роута тоже должен работать
 	function render($path=false){
 		if($path!==false){
-			$path = str_replace('..','',$path);//система безопасности =)
+			$this->chosen = str_replace('..','',$path);//система безопасности =)
 		}
-		
-		$this->isNeedRender  = true;
-		return $this->renderNow($path);
-		
+		Doit::$instance->response->getBody()->write($this->renderNow());
+		$this->isRendered  = true;
 	}
 
 	function renderHTML($html){
-		$this->isNeedRender  = true;
-		return $html;
+		Doit::$instance->response->getBody()->write($html);
+		$this->isRendered  = true;
 	}
 	
-	function layout($layout=false){
-		if($layout !== false){
-			$this->layoutTemplate = $layout;
-		}
-		return '';
-	}
-	
-	
-	function setLayout($layout=false){
-		if($layout !== false){
-			$this->layoutTemplate = $layout;
-		}
-		return $this;
-	}
-	
-	function enableLayout($layout=false)
-	{
-		$this->isNeedRender  = true;
-		if($layout !== false){
-			$this->layoutTemplate = $layout;
-		}
-		return $this;
-	}
-	
-	function renderLayout($layout=false){
-		if($layout !== false){
-			$this->layoutTemplate = $layout;
-		}
-		return $this->partial($this->layoutTemplate);
+	function renderPartial($html){
+		$this->chosen = str_replace('..','',$path);
+		Doit::$instance->response->getBody()->write($this->renderNow());
 	}
 	
 	function partial($path){
-		$path = str_replace('..','',$path);
-		return $this->renderNow($path);
+		$this->chosen = str_replace('..','',$path);
+		return $this->renderNow();
 	}
 	
 	function __toString(){
 		return $this->renderNow();
 	}
 	
-	protected function renderNow($chosen=false){
+	protected function renderNow(){
 
 
 		$trys = array();
@@ -77,49 +51,40 @@ class View
 		$url=strtok($_SERVER["REQUEST_URI"],'?');
 		$url = str_replace('..','',$url);
 		$called_file = false;
-		if($chosen !== false){
-			$called_file = $chosen;
+		if($this->chosen !== false){
+			$called_file = $this->chosen;
 			
-			$shortfile = $chosen;
+			$shortfile = $this->chosen;
+			$trys[]  = $shortfile ;
+			if(is_file($shortfile))
+			{
+				return  $this->from_file($shortfile);
+			}
 			
-			
-			if($chosen{0}=='/'){
-				//папка app, корень
-				$trys[]  = '(1) '. DOIT_ROOT . '/app'.$shortfile ;
-				if(is_file(DOIT_ROOT . '/app'.$shortfile))
-				{
-					return  $this->from_file($shortfile);
-				}
-			}else{
-				$shortfile = '/'.$shortfile;
-				$trys[]  = '(2.1) '. DOIT_ROOT . '/app'.$shortfile ;
-				if(is_file(DOIT_ROOT . '/app/'.$shortfile))
-				{
-					return  $this->from_file($shortfile);
-				}
+			if(is_file(DOIT_ROOT . '/app'.$shortfile))
+			{
+				return  $this->from_file($shortfile);
 			}
 			
 			
 			
-			
-			
-			
 			//вариант четвертый - файл внутри директории, вызов closure
-			$tryfile =d()->_closure_current_view_path . '/'. $chosen;
+			$tryfile =d()->_closure_current_view_path . '/'. $this->chosen;
 			//Вырезаем всё
 			$shortfile = substr($tryfile,strlen(DOIT_ROOT . '/app'));
-			$trys[] = '(3) /app'.$shortfile;
+			$trys[] = '/app'.$shortfile;
 			if(is_file($tryfile))
 			{
+				
 				 return  $this->from_file($shortfile);
 			}
 			
 			//вариант пятый - файл внутри директории, вызов route
 			if(d()->current_route != false){
-				$tryfile =d()->current_route->include_directory . '/'. $chosen;
+				$tryfile =d()->current_route->include_directory . '/'. $this->chosen;
 				//Вырезаем всё
 				$shortfile = substr($tryfile,strlen(DOIT_ROOT . '/app'));
-				$trys[] = '(4) /app'.$shortfile;
+				$trys[] = '/app'.$shortfile;
 				if(is_file($tryfile))
 				{
 					 return  $this->from_file($shortfile);
@@ -129,17 +94,21 @@ class View
 			
 			
 			
-			//$chosen=false;
+			$this->chosen=false;
 			
 			//Указанно явно варианта недостаточно
 		}
 		
 		//Если не указан явно заданный файл, то проводим автопоиск в соответствии с url-ом
 		
-		//Вариант первый - файл существует по указанному адресу, для адреса /news/about это /app/news/about.html
+		//Вариант первый - файл существует
 		$shortfile = $url.'.html';
 		$tryfile = DOIT_ROOT . '/app'.$shortfile;
-		$trys[] = '(5) /app'.$shortfile;
+		
+		
+		 
+		$trys[] = '/app'.$shortfile;
+		
 		if( strpos($shortfile,'/_')===false && is_file($tryfile))
 		{
 			return  $this->from_file($shortfile);
@@ -151,7 +120,7 @@ class View
 			$tryfile = DOIT_ROOT . '/app'.$shortfile;
 			
 			
-			$trys[] = '(6) /app'.$shortfile;
+			$trys[] = '/app'.$shortfile;
 			
 			if(is_file($tryfile))
 			{
@@ -160,12 +129,11 @@ class View
 		}
 		
 		//Вариант третий - show.html
-		//для /news/abrakadabra это /app/news/show.html
 		$try_url = substr($url, 0, strrpos($url, '/') );
 		$shortfile = $try_url.'/show.html';
 		$tryfile = DOIT_ROOT . '/app'.$shortfile;
 		
-		$trys[] = '(7) /app'.$shortfile;
+		$trys[] = '/app'.$shortfile;
 		
 		if(is_file($tryfile))
 		{
@@ -174,21 +142,8 @@ class View
 		
 		 
 		
-		//Тоже самое, но в папке текущего роута
-		if(d()->current_route != false){
-			$tryfile =d()->current_route->include_directory . '/show.html';
-			//Вырезаем всё
-			$shortfile = substr($tryfile,strlen(DOIT_ROOT . '/app'));
-			
-			$trys[] = '(8) /app'.$shortfile;
-			if(is_file($tryfile))
-			{
-				 return  $this->from_file($shortfile);
-			}
-			
-		}
 		
-		return  print_error_message(' ','',$errfile ,'','Не удалось найти файл шаблона '. $chosen .' (проверялись: '.implode(', ',$trys).')'  );
+		return  print_error_message(' ','',$errfile ,'','Не удалось найти файл шаблона (проверялись: '.implode(', ',$trys).')'  );
 	}
 	
 	function from_file($file){

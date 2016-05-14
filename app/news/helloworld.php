@@ -1,7 +1,8 @@
 <?php
 
 d()->route('/news/',function(){
-	print "(1)";
+	
+	print "(news:1)";
 	
 	
 	print d()->view->render('view.html');
@@ -9,11 +10,11 @@ d()->route('/news/',function(){
 	d()->response = d()->response->withHeader('sadasd','asdas');
 	
 	
-	d()->response->getBody()->write('(2)');
+	d()->response->getBody()->write('(news:2)');
 	
-	d()->next();
 	
-	print "(3)";
+	
+	print "(news:3)";
 	
 	
 });
@@ -33,5 +34,5 @@ d()->add('/test/', function($request,$response,$next){
 
 d()->route('/news/bobo',function(){
 	//print 2+2;
-	//d()->view->render('view.html');
+	print d()->view->render();
 });
