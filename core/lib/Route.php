@@ -11,7 +11,8 @@ class Route
 	public $include_directory = false;
 	public $basename = ''; //Имя папки, в которой мы находимся. Также может быть задано из группы роутов при помощи d()->group
 	public $priority = 1000;
-	
+	public $request;
+	public $response;
  
 	
 	public function via($via=false){
@@ -56,7 +57,7 @@ class Route
 		,$url));
 		
 		
-		$this->closure=$closure;
+		$this->closure=$closure->bindTo($this);
 	}
 	
 	public function check($url='/catalog', $method=false, $level="content"){
@@ -131,14 +132,14 @@ class Route
 		ob_start('doit_ob_error_handler');
 		//TODO: error handler
 	
-		Doit::$instance->request = $request;
-		Doit::$instance->response = $response;
+		$this->request = $request;
+		$this->response = $response;
 		
 		call_user_func_array($this->closure,$matches);
 		
 		
-		$request = Doit::$instance->request;
-		$response = Doit::$instance->response;
+		$request = $this->request;
+		$response = $this->response;
 		
 		$_end = ob_get_contents();
 		ob_end_clean();

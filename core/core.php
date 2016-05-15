@@ -10,7 +10,9 @@
 	}
 
 	require_once ('core/vendor/autoload.php');
-
+	
+	require_once ('config.php');
+	
 	//Если ничего не найдено, создаёт класс и экземпляр класса ActiveRecord
 	spl_autoload_register(function ($class_name) {
 		$class_name = ltrim($class_name, '\\');

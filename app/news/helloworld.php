@@ -6,11 +6,11 @@ d()->route('/news/',function(){
 	
 	
 	print d()->view->render('view.html');
+	 
+ 	$this->response = $this->response->withHeader('pageres','pageresheader');
+ 
 	
-	d()->response = d()->response->withHeader('sadasd','asdas');
-	
-	
-	d()->response->getBody()->write('(news:2)');
+	$this->response->getBody()->write('(news:2)');
 	
 	
 	

@@ -323,14 +323,14 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			$this->_data=$this->_options['data'];
 			$this->_count=count($this->_options['data']);
 			if($this->_count>0){
-				if (!isset (doitClass::$instance->datapool['columns_registry'])) {
-					doitClass::$instance->datapool['columns_registry'] = array();
-					doitClass::$instance->datapool['_known_fields'] = array();
+				if (!isset (Doit::$instance->datapool['columns_registry'])) {
+					Doit::$instance->datapool['columns_registry'] = array();
+					Doit::$instance->datapool['_known_fields'] = array();
 				}
 
-				//if (!isset (doitClass::$instance->datapool['columns_registry'][$this->_options['table']])) {
-					doitClass::$instance->datapool['_known_fields'][$this->_options['table']]	=array_keys($this->_data[0]);
-					doitClass::$instance->datapool['columns_registry'][$this->_options['table']] =array_keys($this->_data[0]);
+				//if (!isset (Doit::$instance->datapool['columns_registry'][$this->_options['table']])) {
+					Doit::$instance->datapool['_known_fields'][$this->_options['table']]	=array_keys($this->_data[0]);
+					Doit::$instance->datapool['columns_registry'][$this->_options['table']] =array_keys($this->_data[0]);
 				//}
 			}
 			$this->_data[0]['_only_count'] = count($this->_options['data']);
@@ -362,7 +362,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 
 
 	/**
-	 * Функция возвращает сссылку на сам объект, для запросов вроде doitClass::$instance->User->me[3]
+	 * Функция возвращает сссылку на сам объект, для запросов вроде Doit::$instance->User->me[3]
 	 */
 	public function me()
 	{
@@ -401,7 +401,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 		}elseif ($this->_options['namefield'] == $by || $by=='id'){
 			$this->order_by('');
 		}
-		$this->_options['condition'] = array("( ".DB_FIELD_DEL .$by. DB_FIELD_DEL . " = ".doitClass::$instance->db->quote($what)." )");
+		$this->_options['condition'] = array("( ".DB_FIELD_DEL .$by. DB_FIELD_DEL . " = ".Doit::$instance->db->quote($what)." )");
 		return $this;
 	}
 	
@@ -423,7 +423,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 	public function sql($query)
 	{
 		$this->_options['queryready']=true;
-		$this->_data=doitClass::$instance->db->query($query)->fetchAll();
+		$this->_data=Doit::$instance->db->query($query)->fetchAll();
 		$this->_count = count($this->_data);
 		return $this;
 	}
@@ -457,19 +457,19 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 					if(is_object($param)){
 						$newparam=array();
 						foreach ($param as $key=>$value){
-							$newparam[$key] = doitClass::$instance->db->quote($param[$key]->id);
+							$newparam[$key] = Doit::$instance->db->quote($param[$key]->id);
 						}
 						$param=implode(", ", array_unique ($newparam));
 						
 					}else{
 						foreach ($param as $key=>$value){
-							$param[$key] = doitClass::$instance->db->quote($param[$key]);
+							$param[$key] = Doit::$instance->db->quote($param[$key]);
 						}
 						$param=implode(", ", array_unique ($param));
 					}
 				}
 			}else{
-				$param = doitClass::$instance->db->quote($param);
+				$param = Doit::$instance->db->quote($param);
 			}
 			$_condition .= $_conditions[$i-1]. " ".$param." "  ;
 		}
@@ -589,7 +589,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 	//Общее количество строк в таблице
 	function all_rows_count()
 	{
-		$_count_result = doitClass::$instance->db->query("SELECT COUNT(id) as counting FROM ".$this->_options['table'])->fetch();
+		$_count_result = Doit::$instance->db->query("SELECT COUNT(id) as counting FROM ".$this->_options['table'])->fetch();
 		return $_count_result ['counting'];
 	}
 	
@@ -710,7 +710,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 		
 		$this->_options['queryready']=false;
 
-		$param = doitClass::$instance->db->quote('%'.$args[count($args)-1].'%');
+		$param = Doit::$instance->db->quote('%'.$args[count($args)-1].'%');
 		$_pieces=array();
 		
 		//Вот тут стоит остановиться, и подумать о map-reduce.
@@ -766,7 +766,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 		$this->_options['queryready'] = true;
 		
 		/*
-		$result = doitClass::$instance->db->query($this->to_sql());
+		$result = Doit::$instance->db->query($this->to_sql());
 		if(!$result){
 			print $this->to_sql();
 		}else{
@@ -781,7 +781,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			$this->_data = ActiveRecord::$_queries_cache[$_sql];
 		}else{
 		
-			$db_result = doitClass::$instance->db->query($_sql);
+			$db_result = Doit::$instance->db->query($_sql);
 			
 			if( d()->db->errorCode()=='42S22'){
 				$db_err=d()->db->errorInfo();
@@ -792,7 +792,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 						if($_column_name == 'sort'){
 							$scaffolder = new Scaffold();
 							$scaffolder->create_field( $this->_options['table'], 'sort');
-							$db_result = doitClass::$instance->db->query($_sql);
+							$db_result = Doit::$instance->db->query($_sql);
 						}
 					}
 				}
@@ -803,13 +803,14 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			
 						if( d()->db->errorCode()=='HY000' ){
 				if(DB_TYPE == 'mysql') {
-					doitClass::$instance->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASSWORD);
-					doitClass::$instance->db->exec('SET CHARACTER SET utf8');
-					doitClass::$instance->db->exec('SET NAMES utf8');
+					//Внимание! Отваливаются логеры и обёртки!
+					Doit::$instance->db = new PDO($_ENV['DB_CONNECTION'].':host='.$_ENV['DB_HOST'].';dbname='.$_ENV['DB_DATABASE'], $_ENV['DB_USERNAME'], $_ENV['DB_PASSWORD']);
+					Doit::$instance->db->exec('SET CHARACTER SET utf8');
+					Doit::$instance->db->exec('SET NAMES utf8');
 				} else {
-					doitClass::$instance->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASSWORD);
+					Doit::$instance->db = new PDO(DB_TYPE.':host='.DB_HOST.';dbname='.DB_NAME, DB_USER, DB_PASSWORD);
 				}
-				$db_result = doitClass::$instance->db->query($_sql);
+				$db_result = Doit::$instance->db->query($_sql);
 			}
 			if( d()->db->errorCode()=='HY000' ){
 				print 'Mysql недоступен. Попытка переподключения не удалась. ';
@@ -840,18 +841,18 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 		
 		
 		if($this->_count>0){
-			if (!isset (doitClass::$instance->datapool['columns_registry'])) {
-				doitClass::$instance->datapool['columns_registry'] = array();
-				doitClass::$instance->datapool['_known_fields'] = array();
+			if (!isset (Doit::$instance->datapool['columns_registry'])) {
+				Doit::$instance->datapool['columns_registry'] = array();
+				Doit::$instance->datapool['_known_fields'] = array();
 			}
 
-			if (!isset (doitClass::$instance->datapool['columns_registry'][$this->_options['table']])) {
-				doitClass::$instance->datapool['_known_fields'][$this->_options['table']]	=array_keys($this->_data[0]);
-				doitClass::$instance->datapool['columns_registry'][$this->_options['table']] =array_keys($this->_data[0]);
+			if (!isset (Doit::$instance->datapool['columns_registry'][$this->_options['table']])) {
+				Doit::$instance->datapool['_known_fields'][$this->_options['table']]	=array_keys($this->_data[0]);
+				Doit::$instance->datapool['columns_registry'][$this->_options['table']] =array_keys($this->_data[0]);
 			}
 		}
 		if ($this->_options['calc_rows']) {
-			$_countrows_line = doitClass::$instance->db->query('SELECT FOUND_ROWS()')->fetch();
+			$_countrows_line = Doit::$instance->db->query('SELECT FOUND_ROWS()')->fetch();
 			$this->_count_rows = $_countrows_line[0];
 		}
 	}
@@ -864,7 +865,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			
 		if(isset($this->_data[0])){
 			$_query_string='delete from '.DB_FIELD_DEL.''.$this->_options['table'] . DB_FIELD_DEL." where ".DB_FIELD_DEL."id".DB_FIELD_DEL." = '".$this->_data[0]['id']."'";
-			doitClass::$instance->db->exec($_query_string);
+			Doit::$instance->db->exec($_query_string);
 		}
 		ActiveRecord::$_queries_cache = array();
 		return $this;
@@ -880,7 +881,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			$second_table = substr( $key,11);
 			//удаление существующих строк
 			$_query_string='delete from '.DB_FIELD_DEL.''.$second_table . DB_FIELD_DEL." where ".DB_FIELD_DEL . to_o($table).'_id'  . DB_FIELD_DEL." = ". e($id);
-			doitClass::$instance->db->exec($_query_string);
+			Doit::$instance->db->exec($_query_string);
 
 			$column =  to_o($table).'_id';
 			foreach($elements  as $element){
@@ -943,9 +944,9 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			}else{
 				$_query_string='delete from '.DB_FIELD_DEL.''.$many_to_many_table . DB_FIELD_DEL." where ".DB_FIELD_DEL. $first_field .DB_FIELD_DEL." =  ". e($id) . "";
 			}
-			doitClass::$instance->db->exec($_query_string);
+			Doit::$instance->db->exec($_query_string);
 			//2.добавляем нове записи в таблицу
-			$exist = doitClass::$instance->db->query("SELECT ".DB_FIELD_DEL.''.$second_field . DB_FIELD_DEL." as cln FROM ".DB_FIELD_DEL.''.$many_to_many_table . DB_FIELD_DEL."  where ".DB_FIELD_DEL. $first_field .DB_FIELD_DEL." =  ". e($id) . "")->fetchAll(PDO::FETCH_COLUMN);
+			$exist = Doit::$instance->db->query("SELECT ".DB_FIELD_DEL.''.$second_field . DB_FIELD_DEL." as cln FROM ".DB_FIELD_DEL.''.$many_to_many_table . DB_FIELD_DEL."  where ".DB_FIELD_DEL. $first_field .DB_FIELD_DEL." =  ". e($id) . "")->fetchAll(PDO::FETCH_COLUMN);
 			$exist = array_flip($exist);
 
 			foreach($original_data as $second_id){
@@ -975,10 +976,10 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 				}
 				if(!isset($exist[$second_id])){
 					$_query_string='insert into '.DB_FIELD_DEL. $many_to_many_table .DB_FIELD_DEL." (".DB_FIELD_DEL. $first_field .DB_FIELD_DEL.", ".DB_FIELD_DEL. $second_field .DB_FIELD_DEL." , ".DB_FIELD_DEL."created_at".DB_FIELD_DEL.",  ".DB_FIELD_DEL."updated_at".DB_FIELD_DEL . $additional_keys . ") values (". e($id) . ",". e( $second_id) . ", NOW(), NOW() " . $additional_values . " )";
-					doitClass::$instance->db->exec($_query_string);
-					$insert_id = doitClass::$instance->db->lastInsertId();
+					Doit::$instance->db->exec($_query_string);
+					$insert_id = Doit::$instance->db->lastInsertId();
 					$_query_string = 'update ' . DB_FIELD_DEL . $many_to_many_table . DB_FIELD_DEL . ' set ' . DB_FIELD_DEL . 'sort' . DB_FIELD_DEL . '=' . DB_FIELD_DEL . 'id' . DB_FIELD_DEL . ' where ' . DB_FIELD_DEL . 'id' . DB_FIELD_DEL . '=' . e($insert_id);
-					doitClass::$instance->db->exec($_query_string);
+					Doit::$instance->db->exec($_query_string);
 				}
 			}
 		}
@@ -1017,7 +1018,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 					if(SQL_NULL === $value || (substr($key,-3)=='_id' && $value==='')){
 						$values[]=" NULL ";
 					}else{
-						$values[]=" ". doitClass::$instance->db->quote ($value)." ";
+						$values[]=" ". Doit::$instance->db->quote ($value)." ";
 					}
 					
 				}
@@ -1042,7 +1043,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 					if(SQL_NULL === $value  || (substr($key,-3)=='_id' && $value==='')){
 						$attributes[]=" ". DB_FIELD_DEL . $key. DB_FIELD_DEL ." = NULL ";
 					}else{
-						$attributes[]=" ". DB_FIELD_DEL . $key. DB_FIELD_DEL ." = ". doitClass::$instance->db->quote($value)." ";
+						$attributes[]=" ". DB_FIELD_DEL . $key. DB_FIELD_DEL ." = ". Doit::$instance->db->quote($value)." ";
 					}
 					
 				}
@@ -1050,32 +1051,32 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 				$_query_string='update '.DB_FIELD_DEL.$this->_options['table'].DB_FIELD_DEL.' set '.$attribute_string.", ". DB_FIELD_DEL ."updated_at". DB_FIELD_DEL ." = NOW()  where ". DB_FIELD_DEL ."id". DB_FIELD_DEL ." = '".$this->_data[0]['id']."'";
 			}
 		}
-		$_query_result = doitClass::$instance->db->exec($_query_string);
+		$_query_result = Doit::$instance->db->exec($_query_string);
 		
 		
 		
-		$error_code=doitClass::$instance->db->errorInfo();
+		$error_code=Doit::$instance->db->errorInfo();
 		$error_code=$error_code[1];
 
 		if ($_query_result === false && 1054 == $error_code) {
 			$list_of_existing_columns=$this->columns();
 			foreach($this->_future_data as  $value=>$key){
 				if(!in_array($value,$list_of_existing_columns)){
-					doitClass::$instance->Scaffold->create_field($this->_options['table'],$value);
+					Doit::$instance->Scaffold->create_field($this->_options['table'],$value);
 				}
 			}
 			foreach(array('sort','created_at','updated_at') as  $value){
 				if(!in_array($value,$list_of_existing_columns)){
-					doitClass::$instance->Scaffold->create_field($this->_options['table'],$value);
+					Doit::$instance->Scaffold->create_field($this->_options['table'],$value);
 				}
 			}
-			doitClass::$instance->db->exec($_query_string);
+			Doit::$instance->db->exec($_query_string);
 			ActiveRecord::$_columns_cache = array();
 		}
 		
 		
 		if($this->_options['new']==true) {
-			$this->insert_id = doitClass::$instance->db->lastInsertId();
+			$this->insert_id = Doit::$instance->db->lastInsertId();
 			$current_id = $this->insert_id;
 			$_query_fields = array();
 			if (empty($this->_future_data["sort"])) {
@@ -1089,21 +1090,21 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			}
 		     if (!empty($_query_fields)) {
 			$_query_string = 'update '.DB_FIELD_DEL.$this->_options['table'].DB_FIELD_DEL.' set ' . implode(', ', $_query_fields) . " where ". DB_FIELD_DEL ."id". DB_FIELD_DEL ." = '".$this->insert_id."'";
-			$_query_result = doitClass::$instance->db->exec($_query_string);
+			$_query_result = Doit::$instance->db->exec($_query_string);
 			
  
-			$error_code=doitClass::$instance->db->errorInfo();
+			$error_code=Doit::$instance->db->errorInfo();
 			$error_code=$error_code[1];
 			
 			if ($_query_result === false && 1054 == $error_code) {
 				$list_of_existing_columns=$this->columns();
 				foreach(array('sort','created_at','updated_at') as  $value){
 					if(!in_array($value,$list_of_existing_columns)){
-						doitClass::$instance->Scaffold->create_field($this->_options['table'],$value);
+						Doit::$instance->Scaffold->create_field($this->_options['table'],$value);
 					}
 				}
 				
-				doitClass::$instance->db->exec($_query_string);
+				Doit::$instance->db->exec($_query_string);
 				ActiveRecord::$_columns_cache = array();				
 			}
 		     }
@@ -1299,8 +1300,8 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 	public function show()
 	{
 		if($this->template!=''){
-			doitClass::$instance->this = $this;
-			return doitClass::$instance->call($this->template);
+			Doit::$instance->this = $this;
+			return Doit::$instance->call($this->template);
 		}
 		return '';
 	}
@@ -1312,7 +1313,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 		}
 	
 		//Функция получает имя таблицы. Если таблицы не существует, она возвращает false
-		$_res=doitClass::$instance->db->query('SELECT * FROM '.DB_FIELD_DEL.$tablename.DB_FIELD_DEL.' LIMIT 0');
+		$_res=Doit::$instance->db->query('SELECT * FROM '.DB_FIELD_DEL.$tablename.DB_FIELD_DEL.' LIMIT 0');
 		if ($_res!==false) {
 			$columns  = array();
 			$columns_count =  $_res->columnCount();
@@ -1339,7 +1340,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 		}
 	
 		//Функция получает имя таблицы. Если таблицы не существует, она возвращает false
-		$_res=doitClass::$instance->db->query('SELECT * FROM '.DB_FIELD_DEL.$tablename.DB_FIELD_DEL.' LIMIT 0');
+		$_res=Doit::$instance->db->query('SELECT * FROM '.DB_FIELD_DEL.$tablename.DB_FIELD_DEL.' LIMIT 0');
 		if ($_res!==false) {
 			$columns  = array();
 			$columns_count =  $_res->columnCount();
@@ -1476,7 +1477,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 		}
 		if(isset($this->_data[0])) {
 			foreach( $this->_data[0] as $_key=>$_value) {
-				doitClass::$instance->{$_key} = $_value;
+				Doit::$instance->{$_key} = $_value;
 			}
 			return true;
 		}
@@ -1491,13 +1492,13 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 	
 	public function expand_all_to($varname)
 	{
-		doitClass::$instance->{$varname} = $this->all;
+		Doit::$instance->{$varname} = $this->all;
 		return $this;
 	}
 	
 	public function expand_to($varname)
 	{
-		doitClass::$instance->{$varname} = $this->one;
+		Doit::$instance->{$varname} = $this->one;
 		return $this;
 	}
 	
@@ -1619,7 +1620,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 
 		//Item.ml_title
 		if (substr($name, 0, 3) == 'ml_') {
-			$lang = doitClass::$instance->lang;
+			$lang = Doit::$instance->lang;
 			if ($lang != '') {
 				return $this->{$lang.substr($name,2)};
             }
@@ -1658,7 +1659,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			$column = ActiveRecord::plural_to_one(strtolower(substr($name,3))).'_id';
 			$current_column = $this->_options['plural_to_one']."_id";
 			if(isset($this->_data[0])){
-				$result = doitClass::$instance->db->query("SELECT " . DB_FIELD_DEL . $column . DB_FIELD_DEL . " FROM ".et($many_to_many_table )." WHERE ". DB_FIELD_DEL . $current_column . DB_FIELD_DEL ." = ". e($this->_data[$this->_cursor]['id']))->fetchAll(PDO::FETCH_COLUMN);
+				$result = Doit::$instance->db->query("SELECT " . DB_FIELD_DEL . $column . DB_FIELD_DEL . " FROM ".et($many_to_many_table )." WHERE ". DB_FIELD_DEL . $current_column . DB_FIELD_DEL ." = ". e($this->_data[$this->_cursor]['id']))->fetchAll(PDO::FETCH_COLUMN);
 				return implode(',',$result);
 			}else{
 				return '';
@@ -1855,7 +1856,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			return '<b>'.$this->get('title').'</b>';
 		}
 	}
-	print doitClass::$instance->User->find(1)->title;
+	print Doit::$instance->User->find(1)->title;
 	*/
 	public function get($name, $mutilang=false)
 	{
@@ -1868,9 +1869,9 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 			return $this->_future_data[$name];
 		}
 		
-		if($mutilang && doitClass::$instance->lang != '' && doitClass::$instance->lang!=''){
-			if (isset($this->_data[$this->_cursor]) && isset($this->_data[$this->_cursor][doitClass::$instance->lang.'_'.$name]) && $this->_data[$this->_cursor][doitClass::$instance->lang.'_'.$name]!='') {	
-				return $this->get(doitClass::$instance->lang.'_'.$name);
+		if($mutilang && Doit::$instance->lang != '' && Doit::$instance->lang!=''){
+			if (isset($this->_data[$this->_cursor]) && isset($this->_data[$this->_cursor][Doit::$instance->lang.'_'.$name]) && $this->_data[$this->_cursor][Doit::$instance->lang.'_'.$name]!='') {	
+				return $this->get(Doit::$instance->lang.'_'.$name);
 			}
 		}
 		
@@ -1897,7 +1898,7 @@ abstract class ActiveRecord implements ArrayAccess, Iterator, Countable //extend
 				return $this->_data[$this->_cursor][$name];
 			}
 
-			if(!isset(doitClass::$instance->datapool['_known_fields'][$this->_options['table']][$name])){
+			if(!isset(Doit::$instance->datapool['_known_fields'][$this->_options['table']][$name])){
 
 
 				//Item.user          //Получение связанного объекта
@@ -2057,11 +2058,7 @@ function activerecord_factory_from_table($_tablename, $suffix = '')
 	//return new ar(array('table'=>ar::one_to_plural(strtolower($_modelname))));
 }
 
-//DEPRECATED - Для совместимости
-class ar extends ActiveRecord
-{
-	
-}
+
 function upgrade($array=array())
 {
 	return d()->Model($array);

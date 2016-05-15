@@ -74,8 +74,8 @@ class Doit
 	//group
 	public $_current_route_basename=false;
 	
-	public $request = false;
-	public $response = false;
+	/*public $request = false;
+	public $response = false;*/
 	public $middleware_pipe = false;
 	
 	
@@ -1216,7 +1216,8 @@ class Doit
 	}
 	//Пока использовать нельзя.
 	function next(){
-		$request = d()->request;
+		die('Функция устарела, надо переписать её начисто');
+		/*$request = d()->request;
 		$response = d()->response ; 
 		
 		if($this->_routes_count - 1 > $this->_current_route_deep){
@@ -1231,13 +1232,13 @@ class Doit
 				
 			$this->current_route = 	$current_route ;
 			return $response;
-		}
+		}*/
 	}
 	
 	function runApplication(){
 		
 
-		//$this->http_response = $this->http_response->withHeader('Content-type','text/html');
+		//
  
 		$request = Zend\Diactoros\ServerRequestFactory::fromGlobals(
 			$_SERVER,
@@ -1249,10 +1250,35 @@ class Doit
 		
 		$response =  new Zend\Diactoros\Response();
 		
+		$response = $response->withHeader('Content-type','text/html; Charset=UTF-8');
+	 
 		
 		$this->singleton('view',function(){
 			return new View;
 		});
+		
+		//print print_error_message('Укажите верные настройки базы данных в файле config.php','','' , /*d()->db_error->getMessage()*/ 'Message Here','Ошибка при подключении к базе данных ' );		
+		
+		//Connecting to database, setting up options.
+		//Creating d()->db variable
+ 
+		try {
+
+			if($_ENV['DB_CONNECTION'] == 'mysql') {
+				define ('DB_FIELD_DEL','`');
+				$this->db = new PDO($_ENV['DB_CONNECTION'].':host='.$_ENV['DB_HOST'].';dbname='.$_ENV['DB_DATABASE'], $_ENV['DB_USERNAME'], $_ENV['DB_PASSWORD']);
+				$this->db->exec('SET CHARACTER SET utf8');
+				$this->db->exec('SET NAMES utf8');
+			} else {
+				define ('DB_FIELD_DEL','');
+				$this->db = new PDO($_ENV['DB_CONNECTION'].':host='.$_ENV['DB_HOST'].';dbname='.$_ENV['DB_DATABASE'], $_ENV['DB_USERNAME'], $_ENV['DB_PASSWORD']);
+			}
+			
+		} catch (PDOException $e) {
+			header('Content-type: text/html; Charset=UTF-8');
+			print print_error_message('Укажите верные настройки базы данных в файле config.php, .env или в переменных окружения','','' , /*d()->db_error->getMessage()*/ 'Message Here','Ошибка при подключении к базе данных ' );		
+			exit;
+		}
 		
 		
 		$this->middleware_pipe->pipe(function($request, $response, $next){
