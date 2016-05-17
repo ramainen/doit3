@@ -137,7 +137,6 @@ class Route
 		
 		call_user_func_array($this->closure,$matches);
 		
-		
 		$request = $this->request;
 		$response = $this->response;
 		

@@ -1,8 +1,14 @@
 <?php
 
-$_ENV['APP_ENV'] = 'local';
+$_ENV['APP_ENV'] = 'local'; //production
 $_ENV['APP_DEBUG'] = true;
+
+
+//$_ENV['APP_ENV'] = 'production'; //production
+//$_ENV['APP_DEBUG'] = false;
+
 //$_ENV['APP_KEY'] = 'SomeRandomString';
+
 //$_ENV['APP_URL'] = 'http://localhost'
 
 $_ENV['DB_CONNECTION'] = 'mysql';
@@ -11,6 +17,8 @@ $_ENV['DB_HOST'] = '127.0.0.1';
 $_ENV['DB_DATABASE'] = 'varvar';
 $_ENV['DB_USERNAME'] = 'root';
 $_ENV['DB_PASSWORD'] = '';
+
+
 
 //$_ENV['CACHE_DRIVER'] = 'file'
 //$_ENV['SESSION_DRIVER'] = 'file'

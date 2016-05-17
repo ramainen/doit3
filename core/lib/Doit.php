@@ -30,6 +30,9 @@ SOFTWARE.
 	Система названа в честь статьи Variable Variables http://php.net/manual/en/language.variables.variable.php 26.01.2011
 */
 
+use Psr7Middlewares\Middleware;
+use DebugBar\StandardDebugBar;
+
 class Doit
 {
 	public $is_using_route_all=false;
@@ -1071,6 +1074,8 @@ class Doit
 			return new $name($arguments);
 		}
 
+		//ob_start('doit_ob_error_handler');
+	
 		ob_start('doit_ob_error_handler');
 		//Closure
 		if(isset($this->datapool[$name]) && ($this->datapool[$name] instanceof Closure)) {
@@ -1252,12 +1257,18 @@ class Doit
 		
 		$response = $response->withHeader('Content-type','text/html; Charset=UTF-8');
 	 
+	 
+	 
 		
 		$this->singleton('view',function(){
 			return new View;
 		});
 		
-		//print print_error_message('Укажите верные настройки базы данных в файле config.php','','' , /*d()->db_error->getMessage()*/ 'Message Here','Ошибка при подключении к базе данных ' );		
+		
+		
+		
+		
+		//print print_error_message('Укажите верные настройки базы данных в файле config.php','','' , d()->db_error->getMessage(),'Ошибка при подключении к базе данных ' );		
 		
 		//Connecting to database, setting up options.
 		//Creating d()->db variable
@@ -1275,11 +1286,31 @@ class Doit
 			}
 			
 		} catch (PDOException $e) {
+		
 			header('Content-type: text/html; Charset=UTF-8');
-			print print_error_message('Укажите верные настройки базы данных в файле config.php, .env или в переменных окружения','','' , /*d()->db_error->getMessage()*/ 'Message Here','Ошибка при подключении к базе данных ' );		
+			print print_error_message('Укажите верные настройки базы данных в файле config.php, .env или в переменных окружения','','' , $e->getMessage(),'Ошибка при подключении к базе данных ' );		
 			exit;
 		}
 		
+		
+		
+		if($_ENV['APP_DEBUG'] == true){
+			$this->middleware_pipe->pipe(Middleware::FormatNegotiator());     	
+			$debugBar = new StandardDebugBar();
+			$debugBar->getJavascriptRenderer()->setOptions(array('base_url'=>'/core/vendor/maximebf/debugbar/src/DebugBar/Resources/'));
+			$this->db = new DebugBar\DataCollector\PDO\TraceablePDO($this->db);
+			$debugBar->addCollector(new DebugBar\DataCollector\PDO\PDOCollector($this->db));
+			
+			$debugBarMiddleware = Middleware::DebugBar($debugBar)  ;
+			
+			
+			
+			
+			$this->middleware_pipe->pipe($debugBarMiddleware); 
+		}
+	 
+	 //(optional) To send data in headers in ajax);
+	     //(optional) To send data in headers in ajax);
 		
 		$this->middleware_pipe->pipe(function($request, $response, $next){
 			//Running code here
@@ -1309,9 +1340,13 @@ class Doit
 			}
 			
 		});
-		
+		if($_ENV['APP_ENV'] == 'local'){
+			$this->middleware_pipe->pipe(new \Franzl\Middleware\Whoops\ErrorMiddleware);      //(optional) To send data in headers in ajax);
+		}
 		$pipe = $this->middleware_pipe;
+		 
 		$response = $pipe($request, $response);
+			
 		 
 		foreach ($response->getHeaders() as $name => $values) {
 			foreach ($values as $value) {

@@ -27,8 +27,13 @@ function doit_ob_error_handler($output)
 {
 	$error = error_get_last();
 	
+	
+	 
 	if($error['type']==1){
-		$parent_function =  d()->_active_function();
+		
+		//throw  new Exception('sd') ;
+		
+		$parent_function =  'nono';//d()->_active_function();
 
 
 
