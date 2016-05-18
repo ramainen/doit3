@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+<head>
+	<title>Ошибка</title>
+	<style>
+	body {background-color:white;padding:50px 50px}
+
+pre {
+ 
+  overflow:auto;
+  margin:0 0 0;
+  padding:.5em 1em;
+  
+}
+
+pre code,
+pre .line-number {
+  
+  font:normal normal 16px/18px "Consolas", "Courier New",Courier,Monospace;
+  color:black;
+  display:block;
+}
+
+pre .line-number {
+  float:left;
+  margin:0 1em 0 -1em;
+  border-right:1px solid;
+  text-align:right;
+}
+
+pre .line-number span {
+  display:block;
+  padding:0 .5em 0 1em;
+}
+
+pre .cl {
+  display:block;
+  clear:both;
+}
+
+
+
+
+
+
+
+
+@-webkit-keyframes blink {
+     0% {
+            background:  #9A0000;
+        }
+
+        50% {
+            background: #380101;
+        }
+
+        100% {
+            background:  #9A0000;
+        }
+    }
+
+    @keyframes blink {
+        0% {
+            background:  #9A0000;
+        }
+
+        50% {
+            background: #380101;
+        }
+
+        100% {
+            background:  #9A0000;
+        }
+    }
+  
+
+   
+	
+	.bugi
+{
+background: #9A0000;    text-shadow: 0 1px 0 #0A0A0A;font-weight:bold;
+
+		-webkit-animation-direction: normal;
+        -webkit-animation-duration: 2s;
+        -webkit-animation-iteration-count: infinite;
+        -webkit-animation-name: blink;*/
+        -webkit-animation-timing-function: ease;
+        animation-direction: normal;
+        animation-duration: 2s;
+        animation-iteration-count: infinite;
+        animation-name: blink;
+        animation-timing-function: ease;
+}
+
+
+	 
+.bugi:before {
+content:"→";
+font-family:sans-serif;
+position:absolute;
+left:35px;
+color:white;
+/*font-size:30px;*/
+text-shadow: 0 1px 3px; black;
+}
+
+.codecontainer
+{
+	position:relative;
+	padding-left:20px;
+}
+.codecontainer ol 
+{
+padding-left:50px;
+}
+h1 {
+font-family:lobster;
+font-weight:normal;
+}
+body 
+{
+font-family: Roboto, sans-serif;
+font-size:16px;
+color:#efefef;
+background:black;
+}
+.filename
+{
+margin-left:60px;
+color:#BCFFF6;
+font-size:19px;
+}
+.error_message
+{
+	padding:10px;
+	margin:10px;
+	border:2px solid white;
+	font:normal normal 16px/18px "Consolas", "Courier New",Courier,Monospace;
+}
+	</style>
+	
+	<link href='https://fonts.googleapis.com/css?family=Roboto&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+	
+	<link href='https://fonts.googleapis.com/css?family=Lobster&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
+	<!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/default.min.css"> -->
+	<link rel="stylesheet" href="/core/lib/templates/error/railscasts.css">
+	<script src="/core/lib/templates/error/highlight.pack.js"></script>
+<script>hljs.initHighlightingOnLoad();</script>
+
+</head>
+
+<h1>Произошла ошибка</h1>
+<div>
+#USERMESSAGE#
+</div> 
+<DIV class="error_message">#MESSAGE#</DIV>	
+
+<DIV class="codecontainer" id="code">
+<DIV class="filename">#FILENAME# (#LINE#):</DIV>	
+<pre><code>#FRAGMENT#</code></pre>
+</DIV>
+<script>
+(function() {
+    var pre = document.getElementsByTagName('pre'),
+        pl = pre.length;
+    for (var i = 0; i < pl; i++) {
+        pre[i].innerHTML = '<span class="line-number"></span>' + pre[i].innerHTML + '<span class="cl"></span>';
+        var num = pre[i].innerHTML.split(/\n/).length;
+        for (var j = 0; j < num; j++) {
+            var line_num = pre[i].getElementsByTagName('span')[0];
+            line_num.innerHTML += '<span>' + (j + 1 ) + '</span>';
+        }
+    }
+})//();
+
+var line = '#SHORTNAME#';
+if(line == ''){
+	document.getElementById('code').style.display="none"
+}
+</script>
+</html>

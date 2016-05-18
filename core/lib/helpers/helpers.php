@@ -97,7 +97,7 @@ function doit_parse_error_exception()
  * @param bool $last Скрывать все следающие ошибки после этой.
  * @return string Сформированное сообщение.
  */
-function print_error_message($wrongline,$line,$file,$message,$usermessage,$last=false)
+function old_print_error_message($wrongline,$line,$file,$message,$usermessage,$last=false)
 {
 	static $not_show_me_in_future=false;
 	if($not_show_me_in_future){
@@ -106,6 +106,77 @@ function print_error_message($wrongline,$line,$file,$message,$usermessage,$last=
 	if($last==true){
 		$not_show_me_in_future=true;
 	}
+	$errfile = substr($file,strlen($_SERVER['DOCUMENT_ROOT'])) ;
+	$file_and_line='';
+	if($file!='' || $line!=''){
+		$file_and_line='<div>Файл '.$file.', строка '.$line.'</div>';
+	}
+	return '<div style="padding:20px;border:1px solid red;background:white;color:black;">
+					<div>'.$usermessage.': '.$message.'</div>'.
+					$file_and_line.
+					htmlspecialchars($wrongline).'</div>';
+}
+
+
+
+function print_error_message($wrongline,$line,$file,$message,$usermessage,$last=false, $errcontext)
+{
+	static $not_show_me_in_future=false;
+	if($not_show_me_in_future){
+		return '(not_show_me_in_future)';
+	}
+	if($last==true){
+		$not_show_me_in_future=true;
+	}
+	
+	//return json_encode($errcontext);
+	$template_dir = DOIT_ROOT.'/core/lib/templates/error/';
+	
+	$content =  file_get_contents($template_dir . 'error.html');
+	
+	$replacements = array();
+	//Текст ошибки
+	$replacements['#MESSAGE#'] = $message;
+	$replacements['#USERMESSAGE#'] = $usermessage;
+	
+	$res = '';
+	$arr = file(DOIT_ROOT.$file);
+ 
+	$first_line = $line - 10;
+	if($first_line < 0 ){
+		$first_line = 0;
+	}
+	
+	$last_line = $line + 10;
+	if($last_line > count($arr)-1){
+		$last_line = count($arr)-1;
+	}
+	for($i = $first_line;$i<=$last_line;$i++){
+		$arr[$i] = htmlspecialchars($arr[$i]);
+		if($i == $line-1){
+			$res .= '<li class="bugi" style="">'.$arr[$i].'</li>' ;
+		}else {
+			$res .= '<li class="" style="">'.$arr[$i].'</li>' ;
+		}
+		
+	}
+	
+	/*$r = debug_backtrace();
+	return json_encode($r);*/
+	//$res = trim($res);
+	$res = "<ol start='". ($first_line+1) ."'>".$res."</ol>";
+	$replacements['#FRAGMENT#'] = $res;
+	$replacements['#START_LINE#'] =  $first_line;
+	//Имя файла
+	$replacements['#FILENAME#'] = DOIT_ROOT.$file;
+	$replacements['#SHORTNAME#'] = $file;
+	$replacements['#LINE#'] = $line;
+	//Номер строки
+	
+	//Содержимое файла.
+	$content = str_replace(array_keys($replacements),$replacements,$content);
+	
+	return $content;
 	$errfile = substr($file,strlen($_SERVER['DOCUMENT_ROOT'])) ;
 	$file_and_line='';
 	if($file!='' || $line!=''){

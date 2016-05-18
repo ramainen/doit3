@@ -27,6 +27,6 @@
 	});
 
 	register_shutdown_function('doit_parse_error_exception');
-
+ 
 	$core = new Doit();
 	return $core;

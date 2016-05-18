@@ -9,7 +9,7 @@ d()->route('/:url*',function($url){
 	$a = 2 / 0;
 /*	throw new Exception('sadasd');*/
 	$all = array();
-	$all->sdas();
+		$all->sdas();
 	//print 	d()->Sprite->all->sdas();
 	print d()->view->render();
 	//d()->http_response = d()->http_response->withHeader('sadasd','asdas');

@@ -193,13 +193,6 @@ class View
 	
 	function from_file($file){
 		$name = str_replace(array('/','.','-','\\'),array('_','_','_','_'),substr($file,1)).'_tpl';
-	
-	
-		
-		
-		
-
-
 		if(!function_exists($name)){
 			
 			ob_start(); //Подавление стандартного вывода ошибок Parse Error
@@ -221,7 +214,6 @@ class View
 				}
 				return $_end;
 			}
-
 
 		}else{
 			ob_start();
