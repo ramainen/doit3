@@ -1,6 +1,7 @@
 <!doctype html>
 <html>
 <head>
+<meta charset="utf-8" />
 	<title>Ошибка</title>
 	<style>
 	body {background-color:white;padding:50px 50px}
@@ -40,7 +41,9 @@ pre .cl {
 
 
 
-
+a {
+	color:#BCFFF6;
+}
 
 
 
@@ -137,6 +140,11 @@ font-size:19px;
 	border:2px solid white;
 	font:normal normal 16px/18px "Consolas", "Courier New",Courier,Monospace;
 }
+.showall
+{
+text-decoration:none;
+border-bottom:3px dashed #BCFFF6;
+}
 	</style>
 	
 	<link href='https://fonts.googleapis.com/css?family=Roboto&subset=latin,cyrillic' rel='stylesheet' type='text/css'>
@@ -145,6 +153,7 @@ font-size:19px;
 	<!-- <link rel="stylesheet" href="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.4.0/styles/default.min.css"> -->
 	<link rel="stylesheet" href="/core/lib/templates/error/railscasts.css">
 	<script src="/core/lib/templates/error/highlight.pack.js"></script>
+	<script src="/core/lib/templates/error/jquery-2.2.3.min.js"></script>
 <script>hljs.initHighlightingOnLoad();</script>
 
 </head>
@@ -159,6 +168,18 @@ font-size:19px;
 <DIV class="filename">#FILENAME# (#LINE#):</DIV>	
 <pre><code>#FRAGMENT#</code></pre>
 </DIV>
+
+
+<hr>
+
+<h1>История вызовов (<a class="showall" href="javascript:void(0)">открыть всё</a>):</h1>
+<div>#STACKTRACE#</div>
+
+
+<h1>Запросы к базе данных</h1>
+<div>#QUERIES#</div>
+<DIV class="error_message">#DB_ERROR#</DIV>
+
 <script>
 (function() {
     var pre = document.getElementsByTagName('pre'),
@@ -173,9 +194,24 @@ font-size:19px;
     }
 })//();
 
-var line = '#SHORTNAME#';
+var line = #SHORTNAME#;
 if(line == ''){
 	document.getElementById('code').style.display="none"
-}
+} 
+
+$(function(){
+	$('.hidden_code').hide();
+	$('.js-openrow').click(function(){
+		$(this).parent().parent().find('.hidden_code').toggle();
+		return false;
+	});
+	
+	$('.showall').click(function(){
+		$('.hidden_code').show();
+		return false;
+	});
+	
+	
+})
 </script>
 </html>

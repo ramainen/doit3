@@ -129,8 +129,12 @@ function print_error_message($wrongline,$line,$file,$message,$usermessage,$last=
 		$not_show_me_in_future=true;
 	}
 	
-	//return json_encode($errcontext);
+	//return json_encode(xdebug_get_function_stack());
 	$template_dir = DOIT_ROOT.'/core/lib/templates/error/';
+	
+	//$e = new \Exception;
+	//return($e->getTraceAsString());
+	
 	
 	$content =  file_get_contents($template_dir . 'error.html');
 	
@@ -167,10 +171,94 @@ function print_error_message($wrongline,$line,$file,$message,$usermessage,$last=
 	$res = "<ol start='". ($first_line+1) ."'>".$res."</ol>";
 	$replacements['#FRAGMENT#'] = $res;
 	$replacements['#START_LINE#'] =  $first_line;
+	
+	
+	if(function_exists("xdebug_get_function_stack")){
+		$stack = xdebug_get_function_stack();
+	}else{
+		$stack = debug_backtrace();
+	}
+	
+	
+	$stacktrace = "";
+	foreach ($stack as $row){
+		
+		$res = '';
+		$arr = file($row['file']);
+	 
+		$first_line = $row['line'] - 10;
+		if($first_line < 0 ){
+			$first_line = 0;
+		}
+		
+		$last_line = $row['line'] + 10;
+		if($last_line > count($arr)-1){
+			$last_line = count($arr)-1;
+		}
+		for($i = $first_line;$i<=$last_line;$i++){
+			$arr[$i] = htmlspecialchars($arr[$i]);
+			if($i == $row['line']-1){
+				$res .= '<li class="bugi" style="">'.$arr[$i].'</li>' ;
+			}else {
+				$res .= '<li class="" style="">'.$arr[$i].'</li>' ;
+			}
+			
+		}
+ 
+		$res = "<ol start='". ($first_line+1) ."'>".$res."</ol>";	
+		
+		$res ='<DIV class="codecontainer"  ><DIV class="filename"><a class="js-openrow" href="javascript:void(0)"> ' . $row['file']. ' (' . $row['line']. '):</a></DIV><pre class="hidden_code"><code>'. $res .'</code></pre></DIV>';
+		
+		
+		$stacktrace .= $res;
+	}
+	//return d()->db->errorCode();
+//	
+	$pdo_data = new DebugBar\DataCollector\PDO\PDOCollector(d()->db);
+	$data_queries = $pdo_data->collect();
+	
+	
+	
+	$queries = '';
+	$res = '';
+	//return d()->db->errorCode();
+ //return json_encode($data_queries);
+	foreach($data_queries ['statements'] as $key =>$value ){
+		
+		if($value['is_success']){
+			$res .= '<li class="" style="">'.htmlspecialchars( $value["sql"]).'</li>' ;	
+		}else{
+			$res .= '<li class="bugi" style="">'.htmlspecialchars( $value["sql"]).'</li>' ;	
+		}
+		
+		
+		
+	}
+ 
+	
+	$res = "<ol  >".$res."</ol>";	
+	
+	$res ='<DIV class="codecontainer" > <pre class=" "><code class="sql">'. $res .'</code></pre></DIV>';
+	
+	
+	$queries .= $res;
+	
+	
+	
+	
+	
+	
+//	return json_encode($data_queries);
+	
+	
+	
 	//Имя файла
 	$replacements['#FILENAME#'] = DOIT_ROOT.$file;
-	$replacements['#SHORTNAME#'] = $file;
+	$replacements['#SHORTNAME#'] = json_encode($file);
 	$replacements['#LINE#'] = $line;
+	$replacements['#STACKTRACE#'] = $stacktrace;
+	$replacements['#QUERIES#'] = $queries;
+//	$replacements['#DB_ERROR#'] = d()->db->errorInfo();
 	//Номер строки
 	
 	//Содержимое файла.
