@@ -88,14 +88,14 @@ class View
 				$trys[]  = '(1) '. DOIT_ROOT . '/app'.$shortfile ;
 				if(is_file(DOIT_ROOT . '/app'.$shortfile))
 				{
-					return  $this->from_file($shortfile);
+					return  $this->from_file('/app'.$shortfile);
 				}
 			}else{
 				$shortfile = '/'.$shortfile;
 				$trys[]  = '(2.1) '. DOIT_ROOT . '/app'.$shortfile ;
 				if(is_file(DOIT_ROOT . '/app/'.$shortfile))
 				{
-					return  $this->from_file($shortfile);
+					return  $this->from_file('/app'.$shortfile);
 				}
 			}
 			
@@ -111,18 +111,19 @@ class View
 			$trys[] = '(3) /app'.$shortfile;
 			if(is_file($tryfile))
 			{
-				 return  $this->from_file($shortfile);
+				 return  $this->from_file('/app'.$shortfile);
 			}
 			
 			//вариант пятый - файл внутри директории, вызов route
 			if(d()->current_route != false){
 				$tryfile =d()->current_route->include_directory . '/'. $chosen;
+			
 				//Вырезаем всё
-				$shortfile = substr($tryfile,strlen(DOIT_ROOT . '/app'));
-				$trys[] = '(4) /app'.$shortfile;
+				$shortfile = substr($tryfile,strlen(DOIT_ROOT  ));
+				$trys[] = '(4)  '.$shortfile;
 				if(is_file($tryfile))
 				{
-					 return  $this->from_file($shortfile);
+					 return  $this->from_file( $shortfile);
 				}
 				
 			}
@@ -142,7 +143,7 @@ class View
 		$trys[] = '(5) /app'.$shortfile;
 		if( strpos($shortfile,'/_')===false && is_file($tryfile))
 		{
-			return  $this->from_file($shortfile);
+			return  $this->from_file('/app'.$shortfile);
 		}
 		//Вариант третий - index.html
 		if(substr($url,-1)=='/'){
@@ -155,7 +156,7 @@ class View
 			
 			if(is_file($tryfile))
 			{
-				return  $this->from_file($shortfile);
+				return  $this->from_file('/app'.$shortfile);
 			}	
 		}
 		
@@ -169,7 +170,7 @@ class View
 		
 		if(is_file($tryfile))
 		{
-			return  $this->from_file($shortfile);
+			return  $this->from_file('/app'.$shortfile);
 		}
 		
 		 
@@ -183,7 +184,7 @@ class View
 			$trys[] = '(8) /app'.$shortfile;
 			if(is_file($tryfile))
 			{
-				 return  $this->from_file($shortfile);
+				 return  $this->from_file('/app'.$shortfile);
 			}
 			
 		}
@@ -196,7 +197,7 @@ class View
 		if(!function_exists($name)){
 			
 			ob_start(); //Подавление стандартного вывода ошибок Parse Error
-			$code = $this->shablonize(file_get_contents(DOIT_ROOT . '/app'.$file));
+			$code = $this->shablonize(file_get_contents(DOIT_ROOT . $file));
 			
 			$result=eval('function '.$name.'(){ $doit=Doit::$instance; ?'.'>'.$code.'<'.'?php ;} ');
 			ob_end_clean();

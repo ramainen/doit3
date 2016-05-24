@@ -275,3 +275,7 @@ function print_error_message($wrongline,$line,$file,$message,$usermessage,$last=
 					$file_and_line.
 					htmlspecialchars($wrongline).'</div>';
 }
+
+function doit_bootstrap(){
+	
+}

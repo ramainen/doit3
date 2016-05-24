@@ -617,52 +617,6 @@ class Doit
 
 	 
 
-	/**
-	 * Возвращает скомпилированный в PHP шаблон на основе HTML-файла.
-	 * Исползуется ленивая (lazy) загрузка, если файл не был запрошен, он не будет загружен и обработан,
-	 * если файл уже запрашивался, отдаются данные из кеша.
-	 *
-	 * @param $fragmentname Имя фаргмента (шаблона)
-	 * @return mixed PHP-код шаблона, готовый к запуску
-	 */
-	function get_compiled_code($fragmentname)
-	{
-		if(!isset ($this->compiled_fragments[$fragmentname])) {
-			return $this->compiled_fragments[$fragmentname]=$this->shablonize(file_get_contents($this->fragmentslist[$fragmentname]));
-		}
-		return $this->compiled_fragments[$fragmentname];
-	}
-
-	/**
-	 * Функция для eval
-	 *
-	 * Подготавливает новую функцию для предотвращения повторных eval-ов и запускает её.
-	 * По сути, имея название шаблона, eval-ит его с экономией процессорного времени.
-	 *
-	 * @param $name имя шаблона вида file_tpl
-	 * @return void значение, полученное из шаблона при помощи return.
-	 */
-	function compile_and_run_template($name){
-		if(!function_exists($name)){
-			ob_start(); //Подавление стандартного вывода ошибок Parse Error
-			$result=eval('function '.$name.'(){ $doit=d(); ?'.'>'.$this->get_compiled_code($name).'<'.'?php ;} ');
-			ob_end_clean();
-			if ( $result === false && ( $error = error_get_last() ) ) {
- 				$lines = explode("\n",'function '.$name.'(){ $doit=d(); ?'.'>'.$this->get_compiled_code($name).'<'.'?php ;} ');
-				$file = $this->fragmentslist[$name];
-				return print_error_message( $lines [$error['line']-1],$error['line'],$file,$error['message'],'Ошибка при обработке шаблона',true);
-			} else {
-				return call_user_func($name);
-			}
-
-
-		}else{
-			return call_user_func($name);
-		}
-
-	}
-
-
 
 
 	/**
@@ -766,29 +720,7 @@ class Doit
  
  
 
-	/**
-	 * Запускает имя_функции.tpl.html, либо пытается угадать имя текущей триады
-	 * Будучи запущенной из функции d()->users_list, запускает d()->users_list_tpl(),
-	 * Будучи запущенной из функции d()->users_controller->list, также запускает d()->users_list_tpl(),
-	 * Предаёт управление в d()->call(), так что все переопределения разрешены.
-	 *
-	 * @param string|boolean $parent_function Имя функции
-	 * @return mixed|string|void Результат, HTML-код
-	 */
-	public function view($parent_function=false)
-	{
-		
-		
-		//Определяем функцию (контроллер), из которого был произведён вызов. Припиываем _tpl, вызываем
-		if($parent_function===false) {
-			$parent_function =  $this->_active_function();
-		}
-		if(substr($parent_function,-4)!='_tpl'){
-			$parent_function .= '_tpl';
-		}
-		$parent_function =  str_replace('#','_',$parent_function);
-		return $this->call($parent_function);
-	}
+ 
 
 
  
@@ -1120,7 +1052,7 @@ class Doit
 		}
 		
 		//сначала инициализируются файлы из ./cms, затем из ./app
-		$_work_folders = array('lib','app');
+		$_work_folders = array('core/lib/admin', 'lib','app');
 		if(file_exists(DOIT_ROOT.'/sites/'.DOIT_SERVER_NAME)){
 			$_work_folders[]='sites/'.DOIT_SERVER_NAME;
 		}else{
@@ -1206,7 +1138,7 @@ class Doit
 	
 		
 		
-		
+		doit_bootstrap();
 		
 		foreach($for_include as $value) {
 			
@@ -1264,6 +1196,17 @@ class Doit
 			return new View;
 		});
 		
+		/*$url_part = $request->getUri()->getPath();
+		$url_part = explode('/',$url_part );
+		$url_part = $url_part[1];
+		if($url_part!=''){
+			$_first_letter=strtoupper($url_part{0});
+			$controllername = $_first_letter.substr($url_part,1) . 'Controller' ;
+		}
+		if( class_exists( $controllername)){
+			d()->route('/'.$url_part.'/', $url_part.'#');
+		}
+		*/
 		
 		
 		
