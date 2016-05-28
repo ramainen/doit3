@@ -1,4 +1,148 @@
-лайоут админки
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Панель управления сайтом</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<link href='https://fonts.googleapis.com/css?family=Roboto:400,300,400italic,700,700italic&subset=latin,cyrillic-ext' rel='stylesheet' type='text/css'>
+    <!-- Loading Bootstrap -->
+    <link href="/core/lib/admin/assets/css/vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
 
-{content}
-конец
+    <!-- Loading Flat UI -->
+    <link href="/core/lib/admin/assets/css/flat-ui.min.css" rel="stylesheet">
+    <link href="/core/lib/admin/assets/css/admin.css" rel="stylesheet">
+
+    <link rel="shortcut icon" href="img/favicon.ico">
+
+    <!-- HTML5 shim, for IE6-8 support of HTML5 elements. All other JS at the end of file. -->
+    <!--[if lt IE 9]>
+      <script src="js/vendor/html5shiv.js"></script>
+      <script src="js/vendor/respond.min.js"></script>
+    <![endif]-->
+  </head>
+  <body>
+	<header>
+		 Панель администрирования
+	</header>
+	<div class="sidebar">
+		<div class="sidebar_left">
+			
+			<a href="#" class="sidebar_icon js-sidebar-icon active" data-id="content">
+				<img src="/core/lib/admin/assets/img/icon-content.png" alt="">
+				<span>Контент</span>
+			</a>
+			
+			<a href="#" class="sidebar_icon js-sidebar-icon " data-id="settings">
+				<img src="/core/lib/admin/assets/img/icon-settings.png" alt="">
+				<span>Настройки</span>
+			</a>
+			
+			<a href="#" class="sidebar_icon js-sidebar-icon" data-id="scaffold">
+				<img src="/core/lib/admin/assets/img/icon-scaffold.png" alt="">
+				<span>Генерация</span>
+			</a>
+			
+			<a href="#" class="sidebar_icon js-sidebar-icon" data-id="messages">
+				<img src="/core/lib/admin/assets/img/icon-messages.png" alt="">
+				<span>Заказы и сообщения</span>
+			</a>
+			
+			<a href="#" class="sidebar_icon js-sidebar-icon" data-id="docs">
+				<img src="/core/lib/admin/assets/img/icon-docs.png" alt="">
+				<span>Инструкции</span>
+			</a>
+			
+		</div>
+		<div class="sidebar_right">
+			<div class="sidebar_area js-sidebar-area" data-id="content">
+				<ul class="sidebar-nav">
+                <li class="sidebar-title">
+                   
+                        Контент
+                   
+                </li>
+                <li>
+                    <a href="#">Текстовые страницы</a>
+                </li>
+                <li>
+                    <a href="#">Новости</a>
+                </li>
+                <li>
+                    <a href="#">Разделы каталога</a>
+                </li>
+				<li class="sidebar-title sidebar-second-title">
+                   
+                        Контент
+                   
+                </li>
+                <li>
+                    <a href="#">Опции сайта</a>
+                </li>
+                <li>
+                    <a href="#">Типы пользователей</a>
+                </li>
+                <li>
+                    <a href="#">Цвета продуктовых отделов</a>
+                </li>
+                <li>
+                    <a href="#">Регионы присутствия организации</a>
+                </li>
+                <li>
+                    <a href="#">Contact</a>
+                </li>
+            </ul>
+			</div>
+			
+			<div class="sidebar_area js-sidebar-area" data-id="settings">
+				<ul class="sidebar-nav">
+                <li class="sidebar-title">
+                   
+                        Опции
+                   
+                </li>
+				
+                <li>
+                    <a href="#">Электронная почта</a>
+                </li>
+                <li>
+                    <a href="#">Шаблоны писем</a>
+                </li>
+                <li>
+                    <a href="#">Пользователи</a>
+                </li>
+				<li class="sidebar-title sidebar-second-title">
+                   
+                        Система
+                   
+                </li>
+                <li>
+                    <a href="#">Обновление</a>
+                </li>
+                 
+			</div>
+		
+		
+		</div>
+		сайдбар
+	</div>
+	<div class="content">
+	 
+        <h1>Hello, world!</h1>
+		
+		{content}
+   
+	</div>
+	
+    
+    <!-- /.container -->
+
+
+    <!-- jQuery (necessary for Flat UI's JavaScript plugins) -->
+    <script src="/core/lib/admin/assets/js/vendor/jquery.min.js"></script>
+    <script src="/core/lib/admin/assets/js/admin.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="./core/lib/admin/assets/js/vendor/video.js"></script>
+    <script src="/core/lib/admin/assets/js/flat-ui.min.js"></script>
+
+  </body>
+</html>
